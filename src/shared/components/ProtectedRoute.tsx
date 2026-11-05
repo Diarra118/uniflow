@@ -1,0 +1,57 @@
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/core/firebase/AuthContext'
+import { can, type Action, type Resource } from '@/core/rbac/permissions'
+import { FullPageLoader, ErrorState } from './States'
+
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  requiredPermission?: { resource: Resource; action: Action }
+}
+
+export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
+  const { firebaseUser, appUser, loading, error, refreshClaims } = useAuth()
+
+  if (loading) return <FullPageLoader />
+
+  if (!firebaseUser) return <Navigate to="/login" replace />
+
+  if (error || !appUser) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-base-200 p-6">
+        <ErrorState
+          title="Accès impossible"
+          description={error ?? 'Profil utilisateur introuvable.'}
+          onRetry={() => refreshClaims()}
+        />
+      </div>
+    )
+  }
+
+  // super_admin_plateforme n'a pas de universityId : c'est attendu, pas une erreur.
+  if (appUser.role !== 'super_admin_plateforme' && !appUser.universityId) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-base-200 p-6">
+        <ErrorState
+          title="Compte non rattaché"
+          description="Ce compte n'est rattaché à aucune université. Contactez votre administrateur."
+        />
+      </div>
+    )
+  }
+
+  if (
+    requiredPermission &&
+    !can(appUser.role, requiredPermission.resource, requiredPermission.action)
+  ) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <ErrorState
+          title="Accès refusé"
+          description="Vous n'avez pas la permission d'accéder à cette section."
+        />
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}

@@ -1,0 +1,16 @@
+{
+  "name": "uniflow-rules-tests",
+  "private": true,
+  "type": "module",
+  "description": "Tests des Security Rules RTDB (database.rules.json) via l'émulateur Database.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@types/node": "^22.20.5",
+    "firebase": "^12.19.0",
+    "typescript": "~5.9.0"
+  }
+}

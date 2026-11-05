@@ -1,0 +1,18 @@
+# Compiled JavaScript files
+lib/**/*.js
+lib/**/*.js.map
+
+# TypeScript v1 declaration files
+typings/
+
+# Node.js dependency directory
+node_modules/
+*.local
+# Tests compilés
+lib-test/
+
+# Paramètres par projet (firebase deploy) : jamais versionnés.
+.env
+.env.*
+!.env.example
+!.env.demo-uniflow

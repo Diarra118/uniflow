@@ -1,0 +1,9 @@
+{
+  "name": "uniflow-audit-tests",
+  "private": true,
+  "type": "module",
+  "description": "Tests d'audit Phase 1 (règles, claims, callables, UI) contre les émulateurs Firebase. Node >= 22.18 (import direct de permissions.ts).",
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}

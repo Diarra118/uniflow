@@ -1,0 +1,95 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "uniflow-light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: oklch(98.5% 0.003 260);
+  --color-base-200: oklch(96% 0.005 260);
+  --color-base-300: oklch(92% 0.008 260);
+  --color-base-content: oklch(22% 0.02 265);
+  --color-primary: oklch(38% 0.12 18);
+  --color-primary-content: oklch(97% 0.01 18);
+  --color-secondary: oklch(28% 0.05 265);
+  --color-secondary-content: oklch(97% 0.01 265);
+  --color-accent: oklch(72% 0.13 85);
+  --color-accent-content: oklch(20% 0.05 85);
+  --color-neutral: oklch(28% 0.02 265);
+  --color-neutral-content: oklch(96% 0.005 265);
+  --color-info: oklch(62% 0.1 235);
+  --color-info-content: oklch(98% 0.01 235);
+  --color-success: oklch(52% 0.11 155);
+  --color-success-content: oklch(98% 0.01 155);
+  --color-warning: oklch(72% 0.14 75);
+  --color-warning-content: oklch(20% 0.05 75);
+  --color-error: oklch(50% 0.17 25);
+  --color-error-content: oklch(98% 0.01 25);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --border: 1px;
+}
+
+@plugin "daisyui/theme" {
+  name: "uniflow-dark";
+  default: false;
+  color-scheme: dark;
+  --color-base-100: oklch(19% 0.018 265);
+  --color-base-200: oklch(16% 0.018 265);
+  --color-base-300: oklch(13% 0.016 265);
+  --color-base-content: oklch(92% 0.01 265);
+  --color-primary: oklch(62% 0.15 20);
+  --color-primary-content: oklch(15% 0.03 20);
+  --color-secondary: oklch(80% 0.03 265);
+  --color-secondary-content: oklch(15% 0.02 265);
+  --color-accent: oklch(78% 0.13 85);
+  --color-accent-content: oklch(18% 0.05 85);
+  --color-neutral: oklch(88% 0.01 265);
+  --color-neutral-content: oklch(18% 0.02 265);
+  --color-info: oklch(70% 0.1 235);
+  --color-info-content: oklch(15% 0.02 235);
+  --color-success: oklch(68% 0.13 155);
+  --color-success-content: oklch(15% 0.03 155);
+  --color-warning: oklch(78% 0.14 75);
+  --color-warning-content: oklch(18% 0.05 75);
+  --color-error: oklch(68% 0.17 25);
+  --color-error-content: oklch(15% 0.03 25);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --border: 1px;
+}
+
+:root {
+  --font-display: "Spectral", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-data {
+  font-family: var(--font-mono);
+}
+
+/* Ligne "registre" : accent gauche sur l'élément de navigation actif */
+.nav-ruled-active {
+  position: relative;
+}
+.nav-ruled-active::before {
+  content: "";
+  position: absolute;
+  left: -0.75rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-primary);
+}

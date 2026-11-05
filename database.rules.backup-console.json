@@ -1,0 +1,20 @@
+// ============================================================================
+// SAUVEGARDE DES RÈGLES ACTUELLEMENT EN PRODUCTION — À REMPLIR AVANT DÉPLOIEMENT
+//
+// 1. Console Firebase > Realtime Database > Règles : copiez TOUT le contenu.
+// 2. Remplacez l'objet ci-dessous par ce contenu (gardez ces commentaires).
+// 3. Comparez avec database.rules.json (ex. : `git diff --no-index
+//    database.rules.backup-console.json database.rules.json`) et vérifiez
+//    qu'aucune règle de la console n'est perdue.
+// 4. Seulement ensuite : firebase deploy --only database
+//
+// Ce fichier n'est PAS déployé (firebase.json pointe vers database.rules.json).
+// Les commentaires // sont acceptés par l'éditeur de règles RTDB.
+// ============================================================================
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    ".read": false,
+    ".write": false
+  }
+}
