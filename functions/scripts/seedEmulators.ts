@@ -12,8 +12,17 @@
  * Garde-fous : projet obligatoirement « demo-* » et hôtes d'émulateurs forcés
  * AVANT l'initialisation de l'Admin SDK — ce script ne peut pas viser la
  * production.
+ *
+ * Namespace : l'émulateur Functions fait lire à l'Admin SDK le namespace
+ * `<projectId>` (FIREBASE_CONFIG), alors que l'émulateur Database charge
+ * database.rules.json sur `<projectId>-default-rtdb`. Pour que fonctions,
+ * front et seed partagent les mêmes données SOUS les mêmes règles, le seed
+ * utilise `<projectId>` et y charge database.rules.json. Aucun impact sur la
+ * production (firebase.json inchangé, émulateur uniquement).
  */
 import { randomBytes } from 'node:crypto'
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import * as admin from 'firebase-admin'
 
 export const PROJECT_ID = process.env.GCLOUD_PROJECT ?? 'demo-uniflow'
@@ -24,7 +33,33 @@ process.env.FIREBASE_AUTH_EMULATOR_HOST ??= '127.0.0.1:9099'
 process.env.FIREBASE_DATABASE_EMULATOR_HOST ??= '127.0.0.1:9000'
 
 export const AUTH_EMULATOR = process.env.FIREBASE_AUTH_EMULATOR_HOST
-export const DATABASE_URL = `https://${PROJECT_ID}-default-rtdb.firebaseio.com`
+export const DATABASE_EMULATOR = process.env.FIREBASE_DATABASE_EMULATOR_HOST
+/** Namespace partagé par les fonctions, le front (mode émulateurs) et le seed. */
+export const NAMESPACE = PROJECT_ID
+export const DATABASE_URL = `https://${NAMESPACE}.firebaseio.com`
+
+/** database.rules.json, cherché en remontant depuis ce fichier (sources ou
+ * lib-test compilé). */
+function rulesFile(): string {
+  for (let dir = __dirname; ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, 'database.rules.json')
+    if (existsSync(candidate)) return candidate
+    if (path.dirname(dir) === dir) throw new Error('database.rules.json introuvable')
+  }
+}
+
+/** Charge database.rules.json sur le namespace partagé (API de l'émulateur,
+ * jeton « owner » propre aux émulateurs). */
+export async function loadRulesIntoEmulator() {
+  const res = await fetch(`http://${DATABASE_EMULATOR}/.settings/rules.json?ns=${NAMESPACE}`, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer owner' },
+    body: readFileSync(rulesFile(), 'utf8'),
+  })
+  if (!res.ok) {
+    throw new Error(`Chargement des règles dans l'émulateur impossible (HTTP ${res.status}).`)
+  }
+}
 
 export const SEED = {
   universityId: 'universite-demo',
@@ -57,6 +92,9 @@ export async function seedEmulators(opts: { adminPassword?: string } = {}) {
   const now = Date.now()
   const adminPassword =
     opts.adminPassword ?? process.env.SEED_ADMIN_PASSWORD ?? randomBytes(12).toString('base64url')
+
+  // 0. Règles du projet sur le namespace partagé.
+  await loadRulesIntoEmulator()
 
   // 1. Remise à zéro (émulateurs uniquement).
   await db.ref().set(null)

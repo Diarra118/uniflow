@@ -18,7 +18,9 @@ const firebaseConfig = USE_EMULATORS
       // Configuration fictive : les émulateurs n'utilisent aucune clé réelle.
       apiKey: 'demo-api-key',
       authDomain: `${EMULATOR_PROJECT_ID}.firebaseapp.com`,
-      databaseURL: `https://${EMULATOR_PROJECT_ID}-default-rtdb.firebaseio.com`,
+      // Namespace `<projectId>` : celui que lit l'émulateur Functions ; le seed
+      // (npm run emulators:seed) y charge database.rules.json.
+      databaseURL: `https://${EMULATOR_PROJECT_ID}.firebaseio.com`,
       projectId: EMULATOR_PROJECT_ID,
       storageBucket: `${EMULATOR_PROJECT_ID}.appspot.com`,
       appId: 'demo-app-id',

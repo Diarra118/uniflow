@@ -12,6 +12,8 @@ import assert from 'node:assert/strict'
 import { randomBytes } from 'node:crypto'
 import {
   AUTH_EMULATOR,
+  DATABASE_EMULATOR,
+  NAMESPACE,
   PROJECT_ID,
   SEED,
   seedApp,
@@ -19,8 +21,8 @@ import {
 } from '../scripts/seedEmulators'
 
 const FUNCTIONS_BASE = `http://127.0.0.1:5001/${PROJECT_ID}/europe-west1`
-const DATABASE_EMULATOR = process.env.FIREBASE_DATABASE_EMULATOR_HOST ?? '127.0.0.1:9000'
-const NS = `${PROJECT_ID}-default-rtdb`
+// Namespace partagé avec l'émulateur Functions ; le seed y charge les règles.
+const NS = NAMESPACE
 const TOOLKIT = `http://${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1`
 
 const adminPassword = randomBytes(12).toString('base64url')

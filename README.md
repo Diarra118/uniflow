@@ -88,6 +88,58 @@ npm run test:audit     # règles (A/B, rôles, matrice RBAC), claims serveur, ca
 les tests d'interface pilotent Edge (`AUDIT_BROWSER_CHANNEL=chrome` pour
 Chrome). Résultats détaillés dans `tests/audit/out/` (non versionné).
 
+### Tester en local (émulateurs Firebase)
+
+Toute l'application tourne en local sur les émulateurs Auth, Realtime
+Database et Functions, sur le projet fictif `demo-uniflow` : aucun projet
+réel, aucune facturation, aucun email réel.
+
+Prérequis : Node 22, `firebase-tools` (`npm i -g firebase-tools`) et
+Java 17+ (détecté automatiquement, y compris le JDK d'Android Studio ;
+sinon `winget install EclipseAdoptium.Temurin.21.JDK`).
+
+```bash
+npm install && npm --prefix functions install
+# Terminal 1 — émulateurs (compile les functions puis démarre)
+npm run emulators
+# Terminal 2 — données de démo (réinitialise les émulateurs à chaque fois)
+npm run emulators:seed
+# Terminal 3 — application, avec VITE_USE_EMULATORS=true dans .env.local
+npm run dev
+```
+
+- Application : http://localhost:5173 — connectez-vous avec l'admin affiché
+  par le seed (`admin@universite-demo.test`, mot de passe régénéré à chaque
+  seed, valable dans l'émulateur uniquement).
+- Interface des émulateurs : http://127.0.0.1:4000 (onglets Authentication
+  et Realtime Database pour voir comptes et données).
+- **Lien d'invitation** (création ou renvoi d'accès) : aucun email n'est
+  envoyé ; l'émulateur Auth l'écrit dans le terminal 1 (« To reset the
+  password for …, follow this link: … ») et l'expose aussi sur
+  `http://127.0.0.1:9099/emulator/v1/projects/demo-uniflow/oobCodes`.
+- Tests sur émulateurs : `npm run test:rules`, `npm run test:integration`,
+  `npm run test:audit`.
+
+**Namespace RTDB.** L'émulateur Functions lit le namespace `demo-uniflow`,
+alors que l'émulateur Database charge `database.rules.json` sur
+`demo-uniflow-default-rtdb`. Le seed charge donc les règles sur
+`demo-uniflow`, namespace utilisé aussi par le front en mode émulateurs :
+**lancez toujours le seed** avant d'utiliser l'application, sinon ce
+namespace n'a pas les règles du projet. Production non concernée.
+
+**Limite : déclencheur `onUserProfileWritten` inactif en local.**
+L'émulateur ne le déclenche pas (« function region is defined outside the
+database region, will not trigger » : la base d'un projet `demo-*` est
+supposée en `us-central1`, la fonction est en `europe-west1`). En local :
+- les claims des comptes créés depuis l'interface sont posés directement
+  par `createUserAccount` (fonctionne) ;
+- les claims de l'admin du seed sont posés par le seed ;
+- modifier ou suspendre un profil `/users/{uid}` ne change **pas** ses
+  claims (pas de retrait ni de révocation automatique).
+
+Sa logique est couverte par des tests unitaires (`syncClaimsCore`) ; son
+déclenchement réel **reste à vérifier en recette** après déploiement.
+
 ### Configuration requise avant déploiement
 
 - **Paramètres des fonctions** (dans `functions/.env.<projectId>`, créé à

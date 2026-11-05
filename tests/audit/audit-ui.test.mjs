@@ -7,7 +7,7 @@ import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { chromium } from 'playwright-core'
@@ -38,7 +38,15 @@ const USERS = {
 }
 
 before(async () => {
-  app = admin.initializeApp({ projectId: PID, databaseURL: `https://${PID}-default-rtdb.firebaseio.com` }, 'ui')
+  // Même namespace que le front en mode émulateurs (`<projectId>`), avec les
+  // règles du projet chargées dessus (comme le fait le seed).
+  const rulesRes = await fetch(`http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}/.settings/rules.json?ns=${PID}`, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer owner' },
+    body: readFileSync(`${PROJECT}/database.rules.json`, 'utf8'),
+  })
+  assert.ok(rulesRes.ok, `règles non chargées (HTTP ${rulesRes.status})`)
+  app = admin.initializeApp({ projectId: PID, databaseURL: `https://${PID}.firebaseio.com` }, 'ui')
   const db = app.database()
   await db.ref().set({
     universities: {
