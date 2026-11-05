@@ -129,7 +129,8 @@ maintenant sans usage réel serait de la spéculation non vérifiable.
 
 ## 8. Configuration publique vs secrets serveur
 
-- **Configuration publique** (`VITE_FIREBASE_*` dans `.env` frontend) :
+- **Configuration publique** (`VITE_FIREBASE_*` dans `.env.local` à la
+  racine, copié depuis `.env.example`, jamais versionné) :
   `apiKey`, `authDomain`, `databaseURL`, etc. Ces valeurs sont conçues par
   Firebase pour être visibles côté client (elles apparaissent forcément
   dans le bundle JS livré au navigateur) — leur confidentialité n'est
@@ -137,11 +138,15 @@ maintenant sans usage réel serait de la spéculation non vérifiable.
   du projet) ne contient que ces champs.
 - **Secrets réels** (compte de service Admin SDK, futures clés de
   fournisseurs IA, futures clés Stripe) : ne transitent **jamais** par le
-  bundle client ni par un `.env` committé. Ils vivent exclusivement dans
-  la configuration d'environnement des Cloud Functions
-  (`functions/.env` non committé en production, ou de préférence
+  bundle client ni par un fichier `.env*` versionné. Ils vivent
+  exclusivement dans la configuration d'environnement des Cloud Functions
+  (`functions/.env.<projectId>`, non versionné, ou de préférence
   `firebase functions:secrets:set` / Secret Manager). `functions/.env.example`
   documente les noms attendus sans jamais contenir de valeur réelle.
+- **Fichiers `.env` et Git** : `.gitignore` (racine et `functions/`)
+  ignore `.env` et `.env.*`. Seuls sont versionnés `.env.example`,
+  `functions/.env.example` et `functions/.env.demo-uniflow` (valeurs
+  fictives pour les émulateurs).
 - Vérification effectuée avant livraison : recherche de toute clé
   ressemblant à un secret (`AIza...` en dur, `sk_`, `service_account`)
   dans `src/` — aucune occurrence, toutes les valeurs passent par

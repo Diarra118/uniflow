@@ -54,6 +54,10 @@ npm run dev
 
 ### Cloud Functions
 
+Runtime **Node.js 22** (`engines.node` de `functions/package.json`, utilisé
+par `firebase deploy` ; nodejs20 est retiré depuis le 30 octobre 2026).
+Utilisez Node 22 en local également.
+
 ```bash
 cd functions
 npm install
