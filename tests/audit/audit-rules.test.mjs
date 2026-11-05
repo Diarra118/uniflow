@@ -60,6 +60,9 @@ function tenant(t) {
       [`${s}1`]: { firstName: 'Awa', lastName: 'D', email: `awa@${s}.edu`, uid: `student${t}` },
       [`${s}2`]: { firstName: 'Binta', lastName: 'B', email: `binta@${s}.edu`, uid: `student${t}2` },
       [`${s}3`]: { firstName: 'Sans', lastName: 'Compte', email: `sc@${s}.edu` },
+      // Fiche liée à l'uid de chaque autre rôle (matrice ownStudentRecord).
+      ...Object.fromEntries(['admin', 'teacher', 'parent'].map((r) => [`own-${r}${t}`, { firstName: r, email: `${r}@${s}.edu`, uid: `${r}${t}` }])),
+      'own-superAdmin': { firstName: 'sa', email: `sa@${s}.edu`, uid: 'superAdmin' },
     },
     teachers: { [`t${s}1`]: { firstName: 'Moussa', email: `m@${s}.edu`, uid: `teacher${t}` } },
     programs: { p1: { name: 'Info' } },
@@ -307,7 +310,8 @@ const RES = {
   // students = la liste (et les fiches d'autrui) pour TOUS les rôles ;
   // ownStudentRecord = sa propre fiche (a1, uid studentA), rôle étudiant seulement.
   students: { list: 'students', item: 'students/a1', del: 'students/a3', listForAll: true },
-  ownStudentRecord: { item: 'students/a1', del: 'students/a1', onlyRoles: ['student'] },
+  // Pour chaque rôle : la fiche liée à SON uid (a1 pour l'étudiant).
+  ownStudentRecord: { item: 'students/OWN', del: 'students/OWN', own: true },
   teachers: { list: 'teachers', item: 'teachers/ta1', del: 'teachers/ta1' },
   programs: { list: 'programs', item: 'programs/p1', del: 'programs/p1' },
   courses: { list: 'courses', item: 'courses/c1', del: 'courses/c1' },
@@ -329,10 +333,10 @@ const matrix = []
 describe('4. matrice RBAC UI vs règles', () => {
   for (const [role, uid] of Object.entries(ROLE_UID)) {
     for (const [res, spec] of Object.entries(RES)) {
-      if (spec.onlyRoles && !spec.onlyRoles.includes(role)) continue
       test(`${role} × ${res}`, async () => {
         const base = spec.abs ? '' : 'universities/A/'
-        const sub = (p) => base + p.replace('ROLEUID', uid)
+        const ownId = uid === 'studentA' ? 'a1' : `own-${uid}`
+        const sub = (p) => base + p.replace('ROLEUID', uid).replace('OWN', ownId)
         const ok = async (op) => op.then(() => true, () => false)
         const parent = (spec.item.split('/')[0])
         const readTarget = spec.list && (spec.listForAll || (role !== 'student' && role !== 'parent')) ? spec.list : spec.item
@@ -346,7 +350,9 @@ describe('4. matrice RBAC UI vs règles', () => {
         for (const action of ['read', 'create', 'update', 'delete']) {
           await reseed()
           const rules = await ok(ops[action]())
-          const ui = can(role, res, action)
+          // Sa propre fiche : accessible via ownStudentRecord OU via les droits
+          // sur toutes les fiches (students).
+          const ui = spec.own ? can(role, res, action) || can(role, 'students', action) : can(role, res, action)
           matrix.push({ role, res, action, ui, rules })
         }
       })
