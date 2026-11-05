@@ -11,6 +11,24 @@
       rel="stylesheet"
     />
     <title>SaaS de Gestion Universitaire Piloté par IA</title>
+    <script>
+      // Thème appliqué dès le chargement, sur TOUTES les pages (y compris
+      // /login et /mot-de-passe-oublie, où useTheme n'est pas monté) et sans
+      // flash du thème clair. Même logique que src/shared/hooks/useTheme.ts.
+      ;(function () {
+        var theme = null
+        try {
+          var stored = localStorage.getItem('uniflow-theme')
+          if (stored === 'uniflow-light' || stored === 'uniflow-dark') theme = stored
+        } catch (e) {}
+        if (!theme) {
+          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'uniflow-dark'
+            : 'uniflow-light'
+        }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

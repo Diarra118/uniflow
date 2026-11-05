@@ -180,6 +180,7 @@ test('connexion admin, persistance après rechargement et nouvel onglet, thème,
   const loginTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
   const bgLogin = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
   writeFileSync(new URL('ui-theme.json', OUT), JSON.stringify({ theme0, theme1, loginThemeAfterReload: loginTheme, bgApp, bgLogin }))
+  assert.equal(loginTheme, theme1, 'thème enregistré appliqué sur /login après rechargement')
   await page.screenshot({ path: fileURLToPath(new URL('ui-login-after-reload.png', OUT)) })
   await ctx.close()
 })
@@ -252,4 +253,51 @@ test('claims sans profil /users : « Profil introuvable »', async () => {
   await page.goto(`${BASE}/app`)
   await page.getByText(/Profil introuvable/).first().waitFor({ timeout: 15000 })
   await ctx.close()
+})
+
+test('thème enregistré appliqué dès le chargement sur /login et /mot-de-passe-oublie', async () => {
+  const results = {}
+  for (const theme of ['uniflow-dark', 'uniflow-light']) {
+    for (const path of ['/login', '/mot-de-passe-oublie']) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
+      await ctx.addInitScript((t) => { try { localStorage.setItem('uniflow-theme', t) } catch {} }, theme)
+      const page = await ctx.newPage()
+      // Preuve que le thème est posé AVANT React : module applicatif bloqué.
+      await page.route('**/src/main.tsx', (route) => route.abort())
+      await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' })
+      const beforeReact = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+      await page.unroute('**/src/main.tsx')
+      await page.reload()
+      await page.locator('h1').first().waitFor()
+      const withReact = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+      results[`${theme} ${path}`] = { beforeReact, withReact }
+      assert.equal(beforeReact, theme, `${path} : thème posé dès le chargement`)
+      assert.equal(withReact, theme, `${path} : thème conservé une fois l'application chargée`)
+      await ctx.close()
+    }
+  }
+  // Valeur enregistrée invalide : ignorée (préférence du système, ici claire).
+  const ctx = await browser.newContext({ colorScheme: 'light' })
+  await ctx.addInitScript(() => { try { localStorage.setItem('uniflow-theme', 'piege') } catch {} })
+  const page = await ctx.newPage()
+  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
+  results.invalide = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+  assert.equal(results.invalide, 'uniflow-light')
+  await ctx.close()
+  // Rendu effectif : le panneau du formulaire est sombre en thème sombre.
+  const dark = await browser.newContext({ viewport: { width: 1280, height: 800 } })
+  await dark.addInitScript(() => { try { localStorage.setItem('uniflow-theme', 'uniflow-dark') } catch {} })
+  const p2 = await dark.newPage()
+  await p2.goto(`${BASE}/login`)
+  await p2.locator('#email').waitFor()
+  const bg = await p2.evaluate(() => getComputedStyle(document.querySelector('.bg-base-100')).backgroundColor)
+  // Couleur en oklch(L C h) (Tailwind 4 / DaisyUI 5) ou rgb(r, g, b).
+  const isDark = bg.startsWith('oklch(')
+    ? Number(bg.slice(6).split(/[\s/)]+/)[0]) < 0.4
+    : bg.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).reduce((x, y) => x + y, 0) / 3 < 80
+  results.loginPanelBackground = bg
+  assert.ok(isDark, `fond sombre attendu, obtenu ${bg}`)
+  await p2.screenshot({ path: fileURLToPath(new URL('ui-login-dark.png', OUT)) })
+  await dark.close()
+  writeFileSync(new URL('ui-theme-public.json', OUT), JSON.stringify(results, null, 1))
 })

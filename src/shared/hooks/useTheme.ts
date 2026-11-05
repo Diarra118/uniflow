@@ -4,9 +4,15 @@ type Theme = 'uniflow-light' | 'uniflow-dark'
 
 const STORAGE_KEY = 'uniflow-theme'
 
+/** Même logique que le script de index.html, qui applique le thème dès le
+ * chargement (pages publiques comprises). */
 function getInitialTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
-  if (stored) return stored
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored === 'uniflow-light' || stored === 'uniflow-dark') return stored
+  } catch {
+    // Stockage indisponible : préférence du système.
+  }
   return window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'uniflow-dark'
     : 'uniflow-light'
@@ -17,7 +23,11 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(STORAGE_KEY, theme)
+    try {
+      localStorage.setItem(STORAGE_KEY, theme)
+    } catch {
+      // Stockage indisponible : thème appliqué, non mémorisé.
+    }
   }, [theme])
 
   const toggleTheme = useCallback(() => {
