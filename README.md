@@ -118,7 +118,10 @@ npm run dev
   password for …, follow this link: … ») et l'expose aussi sur
   `http://127.0.0.1:9099/emulator/v1/projects/demo-uniflow/oobCodes`.
 - Tests sur émulateurs : `npm run test:rules`, `npm run test:integration`,
-  `npm run test:audit`.
+  `npm run test:audit`, `npm run test:e2e` (parcours complet dans Edge :
+  l'admin crée un enseignant et un étudiant, chacun se connecte). Sur la page
+  d'action de l'émulateur, le nouveau mot de passe se passe dans l'URL
+  (`&newPassword=…`) : il n'y a pas de formulaire en local.
 
 **Namespace RTDB.** L'émulateur Functions lit le namespace `demo-uniflow`,
 alors que l'émulateur Database charge `database.rules.json` sur
