@@ -304,7 +304,10 @@ describe('lot 2. enseignant limité à ses cours', () => {
 // 4. Matrice RBAC : permissions.ts (UI) vs Security Rules (réel)
 // ---------------------------------------------------------------------
 const RES = {
-  students: { list: 'students', item: 'students/a1', del: 'students/a3' },
+  // students = la liste (et les fiches d'autrui) pour TOUS les rôles ;
+  // ownStudentRecord = sa propre fiche (a1, uid studentA), rôle étudiant seulement.
+  students: { list: 'students', item: 'students/a1', del: 'students/a3', listForAll: true },
+  ownStudentRecord: { item: 'students/a1', del: 'students/a1', onlyRoles: ['student'] },
   teachers: { list: 'teachers', item: 'teachers/ta1', del: 'teachers/ta1' },
   programs: { list: 'programs', item: 'programs/p1', del: 'programs/p1' },
   courses: { list: 'courses', item: 'courses/c1', del: 'courses/c1' },
@@ -326,12 +329,13 @@ const matrix = []
 describe('4. matrice RBAC UI vs règles', () => {
   for (const [role, uid] of Object.entries(ROLE_UID)) {
     for (const [res, spec] of Object.entries(RES)) {
+      if (spec.onlyRoles && !spec.onlyRoles.includes(role)) continue
       test(`${role} × ${res}`, async () => {
         const base = spec.abs ? '' : 'universities/A/'
         const sub = (p) => base + p.replace('ROLEUID', uid)
         const ok = async (op) => op.then(() => true, () => false)
         const parent = (spec.item.split('/')[0])
-        const readTarget = spec.list && role !== 'student' && role !== 'parent' ? spec.list : spec.item
+        const readTarget = spec.list && (spec.listForAll || (role !== 'student' && role !== 'parent')) ? spec.list : spec.item
         const ops = {
           read: () => R(uid, sub(readTarget)),
           // Écritures « valides » au sens des .validate, sur le cours de l'enseignant (c1).

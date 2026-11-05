@@ -71,7 +71,7 @@ function App() {
             <Route
               path="mon-dossier"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredPermission={{ resource: 'ownStudentRecord', action: 'read' }}>
                   <MyStudentRecordPage />
                 </ProtectedRoute>
               }

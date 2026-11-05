@@ -7,7 +7,8 @@ import type { Role } from '@/core/types'
  * conformément à l'architecture validée.
  */
 export type Resource =
-  | 'students'
+  | 'students' // l'ensemble des fiches étudiants (liste et fiches d'autrui)
+  | 'ownStudentRecord' // SA propre fiche, pour un étudiant (« Mon dossier »)
   | 'teachers'
   | 'programs'
   | 'courses'
@@ -44,7 +45,9 @@ const RO: Action[] = ['read']
  */
 export const PERMISSIONS: PermissionMatrix = {
   super_admin_plateforme: {
-    platformUniversities: ALL,
+    // Lecture seule : platform/universitiesIndex est en `.write: false`
+    // côté règles (alimentation réservée au serveur).
+    platformUniversities: RO,
   },
   admin_universite: {
     students: ALL,
@@ -84,6 +87,9 @@ export const PERMISSIONS: PermissionMatrix = {
     aiInsights: RO,
   },
   student: {
+    // Sa fiche uniquement (règles : students/{id}.uid === auth.uid) ; jamais
+    // la liste, d'où une ressource distincte de `students`.
+    ownStudentRecord: RO,
     programs: RO,
     courses: RO,
     classes: RO,
@@ -100,8 +106,8 @@ export const PERMISSIONS: PermissionMatrix = {
   parent: {
     // Lecture toujours conditionnée, côté serveur, à l'existence d'une
     // entrée parentLinks/{parentUid}/{studentId} autorisée (architecture v1.1, décision #2).
+    // Pas d'`exams` : les règles n'ouvrent pas les examens aux parents.
     grades: RO,
-    exams: RO,
     payments: RO,
     documents: RO,
     notifications: RO,

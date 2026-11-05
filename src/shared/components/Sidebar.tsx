@@ -27,6 +27,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { appUser, university } = useAuth()
 
   const isPlatformAdmin = appUser?.role === 'super_admin_plateforme'
+  const canReadOwnRecord = useCan('ownStudentRecord', 'read')
   const canReadStudents = useCan('students', 'read')
   const canReadTeachers = useCan('teachers', 'read')
   const canReadPrograms = useCan('programs', 'read')
@@ -68,7 +69,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <LayoutDashboard size={17} strokeWidth={2} />
               Tableau de bord
             </NavLink>
-            {appUser?.role === 'student' && (
+            {canReadOwnRecord && (
               <NavLink to="/app/mon-dossier" onClick={onNavigate} className={linkClass}>
                 <GraduationCap size={17} strokeWidth={2} />
                 Mon dossier

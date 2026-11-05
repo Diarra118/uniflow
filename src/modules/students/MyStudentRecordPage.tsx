@@ -1,18 +1,22 @@
 import { Navigate } from 'react-router-dom'
 import { GraduationCap } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
+import { useCan } from '@/core/rbac/useCan'
 import { EmptyState } from '@/shared/components/States'
 import { StudentProfilePage } from './StudentProfilePage'
 
 /**
- * « Mon dossier » d'un étudiant. Les règles RTDB ne lui permettent de lire
- * que SA fiche (students/{id} où uid === auth.uid) : l'identifiant vient de
- * /users/{uid}.linkedRecordId, posé par createUserAccount.
+ * « Mon dossier » d'un étudiant (permission `ownStudentRecord`). Les règles
+ * RTDB ne lui permettent de lire que SA fiche (students/{id} où
+ * uid === auth.uid) : l'identifiant vient de /users/{uid}.linkedRecordId,
+ * posé par createUserAccount.
  */
 export function MyStudentRecordPage() {
   const { appUser } = useAuth()
+  const canReadOwnRecord = useCan('ownStudentRecord', 'read')
 
-  if (appUser?.role !== 'student') return <Navigate to="/app" replace />
+  // Défense en profondeur : la route est déjà gardée par ProtectedRoute.
+  if (!appUser || !canReadOwnRecord) return <Navigate to="/app" replace />
 
   if (!appUser.linkedRecordId || appUser.linkedRecordType !== 'student') {
     return (
