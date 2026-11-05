@@ -102,9 +102,8 @@ async function newReadShowsData(page) {
 
 // Règles (lot 3, partie 2) : dès l'écriture du profil, plus AUCUNE nouvelle
 // donnée n'est servie (écoute ouverte comprise) et toute nouvelle lecture est
-// refusée. Les données déjà affichées restent à l'écran tant que l'interface
-// ne réagit pas (requêtes limitToFirst non annulées formellement) : c'est
-// l'objet de la partie 3 (dataLostAfterMs, mesuré ici).
+// refusée. Interface (partie 3) : elle écoute /users/{uid} et masque les
+// données déjà affichées (déconnexion ou renouvellement du token).
 test('1. suspension (profil suspendu + claims vidés + sessions révoquées) : plus aucune donnée servie', async () => {
   const { ctx, page } = await openStudentsAs('rev-t1', pw.t1)
   const lossMs = await measureLoss(page, async () => {
@@ -117,6 +116,7 @@ test('1. suspension (profil suspendu + claims vidés + sessions révoquées) : p
     newReadShowsData: await newReadShowsData(page),
     displayedDataClearedAfterMs: lossMs,
   }
+  assert.ok(lossMs !== null && lossMs < 3000, `données affichées masquées en ${lossMs} ms`)
   assert.equal(report.suspension.newDataReachesOpenScreen, false, 'aucune nouvelle donnée sur l’écran ouvert')
   assert.equal(report.suspension.newReadShowsData, false, 'nouvelle lecture refusée')
   await ctx.close()
@@ -133,6 +133,7 @@ test('2. changement de rôle (profil + claims enseignant → étudiant) : ancien
     newReadShowsData: await newReadShowsData(page),
     displayedDataClearedAfterMs: lossMs,
   }
+  assert.ok(lossMs !== null && lossMs < 3000, `données affichées masquées en ${lossMs} ms`)
   assert.equal(report.roleChange.newDataReachesOpenScreen, false)
   assert.equal(report.roleChange.newReadShowsData, false)
   await ctx.close()

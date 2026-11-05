@@ -37,7 +37,8 @@ function signInErrorMessage(err: unknown): string {
 }
 
 export function LoginPage() {
-  const { firebaseUser, appUser, loading, error, signIn, signOut, refreshClaims } = useAuth()
+  const { firebaseUser, appUser, loading, error, signOutMessage, signIn, signOut, refreshClaims } =
+    useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fieldError, setFieldError] = useState<string | null>(null)
@@ -178,6 +179,12 @@ export function LoginPage() {
 
             {(fieldError || authError) && (
               <p className="text-sm text-error">{fieldError ?? authError}</p>
+            )}
+
+            {!firebaseUser && signOutMessage && (
+              <div role="alert" className="alert alert-warning text-sm">
+                <span>{signOutMessage}</span>
+              </div>
             )}
 
             {accountError && (

@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
   type ReactNode,
@@ -25,6 +26,9 @@ interface AuthContextValue {
   university: UniversityMeta | null
   loading: boolean
   error: string | null
+  /** Raison d'une déconnexion imposée (suspension, suppression, droits
+   * modifiés), affichée sur la page de connexion. */
+  signOutMessage: string | null
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -33,6 +37,28 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+const SIGN_OUT_REASON_KEY = 'uniflow-signout-reason'
+
+const SIGN_OUT_MESSAGES = {
+  suspended: "Votre compte a été suspendu. Contactez l'administration de votre université.",
+  deleted:
+    "Profil introuvable : votre compte a été supprimé ou n'est plus rattaché à une université. Contactez votre administrateur.",
+  rightsChanged: 'Vos droits ont été modifiés. Reconnectez-vous pour continuer.',
+} as const
+
+/** Délais des tentatives de renouvellement du token quand le profil ne
+ * correspond plus aux claims (le déclencheur serveur met les claims à jour
+ * juste APRÈS le profil). Au-delà : déconnexion. */
+const RIGHTS_REFRESH_DELAYS_MS = [0, 2000, 5000, 10000]
+
+function readStoredSignOutReason(): string | null {
+  try {
+    return sessionStorage.getItem(SIGN_OUT_REASON_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
   const [claims, setClaims] = useState<{ role: Role; universityId: string | null } | null>(null)
@@ -40,12 +66,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [university, setUniversity] = useState<UniversityMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [signOutMessage, setSignOutMessage] = useState<string | null>(readStoredSignOutReason)
+  /** Boucle de renouvellement en cours (rôle/université attendus du profil). */
+  const rightsLoop = useRef<{ key: string; cancelled: boolean } | null>(null)
+
+  const cancelRightsLoop = useCallback(() => {
+    if (rightsLoop.current) rightsLoop.current.cancelled = true
+    rightsLoop.current = null
+  }, [])
+
+  /** Déconnexion imposée par un changement du profil côté serveur. */
+  const forceSignOut = useCallback(async (reason: keyof typeof SIGN_OUT_MESSAGES) => {
+    const message = SIGN_OUT_MESSAGES[reason]
+    try {
+      sessionStorage.setItem(SIGN_OUT_REASON_KEY, message)
+    } catch {
+      // Stockage indisponible : le message reste affiché jusqu'au rechargement.
+    }
+    setSignOutMessage(message)
+    await firebaseSignOut(auth)
+  }, [])
 
   // Session Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user)
       if (!user) {
+        // Déconnexion : aucune boucle de renouvellement ne doit survivre.
+        if (rightsLoop.current) rightsLoop.current.cancelled = true
+        rightsLoop.current = null
         setClaims(null)
         setProfile(null)
         setUniversity(null)
@@ -89,8 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [firebaseUser])
 
-  // Profil affichable (/users/{uid}) — écrit uniquement par Cloud Functions,
-  // lu ici pour le nom, l'email, le statut.
+  // Profil (/users/{uid}) — écrit uniquement côté serveur, lu ici pour le
+  // nom, l'email et le statut, et ÉCOUTÉ pour réagir sans attendre
+  // l'expiration du token : les Security Rules coupent déjà l'accès aux
+  // données dès que le profil change ; l'interface suit.
   useEffect(() => {
     if (!firebaseUser || !claims) {
       setProfile(null)
@@ -98,32 +149,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const nodeRef = ref(rtdb, userPath(firebaseUser.uid))
-    return onValue(
+    const unsubscribe = onValue(
       nodeRef,
       (snap) => {
-        if (snap.exists()) {
-          const data = snap.val()
-          setProfile({
-            uid: firebaseUser.uid,
-            name: data.name,
-            email: data.email,
-            status: data.status,
-            createdAt: data.createdAt,
-            linkedRecordId: data.linkedRecordId,
-            linkedRecordType: data.linkedRecordType,
-          })
-        } else {
+        if (!snap.exists()) {
+          // Profil supprimé (ou jamais créé) alors que le compte a des claims.
           setProfile(null)
-          setError('Profil introuvable. Contactez votre administrateur.')
+          void forceSignOut('deleted')
+          return
         }
+        const data = snap.val()
+        if (data.status === 'suspended') {
+          setProfile(null)
+          void forceSignOut('suspended')
+          return
+        }
+
+        setProfile({
+          uid: firebaseUser.uid,
+          name: data.name,
+          email: data.email,
+          status: data.status,
+          createdAt: data.createdAt,
+          linkedRecordId: data.linkedRecordId,
+          linkedRecordType: data.linkedRecordType,
+        })
         setLoading(false)
+
+        const profileRole = data.role as Role
+        const profileUniversity: string | null = data.universityId ?? null
+        if (profileRole !== claims.role || profileUniversity !== claims.universityId) {
+          // Rôle ou université modifiés : l'accès aux données est déjà coupé
+          // par les règles ; on masque l'écran et on renouvelle le token
+          // jusqu'à obtenir les nouveaux claims (le déclencheur serveur les
+          // pose juste après le profil), sinon déconnexion.
+          setError('Vos droits ont été modifiés : mise à jour en cours…')
+          const key = `${profileRole}|${profileUniversity}`
+          if (rightsLoop.current?.key === key) return
+          cancelRightsLoop()
+          const loop = { key, cancelled: false }
+          rightsLoop.current = loop
+          void (async () => {
+            // Boucle autonome : elle lit elle-même les claims renouvelés et ne
+            // dépend pas d'onIdTokenChanged (qui ne se déclenche pas si le
+            // token renouvelé est identique au précédent).
+            for (const delay of RIGHTS_REFRESH_DELAYS_MS) {
+              await new Promise((resolve) => window.setTimeout(resolve, delay))
+              if (loop.cancelled || !auth.currentUser) return
+              try {
+                const res = await auth.currentUser.getIdTokenResult(true)
+                const newUniversity = (res.claims.universityId as string | undefined) ?? null
+                if (res.claims.role === profileRole && newUniversity === profileUniversity) {
+                  if (rightsLoop.current === loop) rightsLoop.current = null
+                  setError(null)
+                  setClaims({ role: profileRole, universityId: profileUniversity })
+                  return
+                }
+              } catch {
+                break
+              }
+            }
+            if (!loop.cancelled) {
+              if (rightsLoop.current === loop) rightsLoop.current = null
+              void forceSignOut('rightsChanged')
+            }
+          })()
+          return
+        }
+        cancelRightsLoop()
+        if (data.status !== 'active') {
+          setError("Votre compte est en cours d'activation. Réessayez dans quelques instants.")
+        }
       },
       () => {
         setError('Impossible de charger le profil.')
         setLoading(false)
       }
     )
-  }, [firebaseUser, claims])
+    return unsubscribe
+  }, [firebaseUser, claims, forceSignOut, cancelRightsLoop])
 
   // Métadonnées de l'université (si rattaché à un tenant)
   useEffect(() => {
@@ -140,6 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null)
+    setSignOutMessage(null)
+    try {
+      sessionStorage.removeItem(SIGN_OUT_REASON_KEY)
+    } catch {
+      // Stockage indisponible : rien à effacer.
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (err) {
@@ -182,6 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         university,
         loading,
         error,
+        signOutMessage,
         signIn,
         signOut,
         resetPassword,

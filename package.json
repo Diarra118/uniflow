@@ -17,7 +17,8 @@
     "test:audit:server": "npm --prefix functions run build && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 tests/audit/audit-claims.test.mjs tests/audit/audit-callable.test.mjs\"",
     "test:audit:ui": "node scripts/with-java.mjs firebase emulators:exec --only auth,database --project demo-uniflow \"node --test --test-concurrency=1 tests/audit/audit-ui.test.mjs\"",
     "test:e2e": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 tests/audit/e2e-accounts.test.mjs\"",
-    "test:revocation": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/revocation.test.mjs\""
+    "test:revocation": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/revocation.test.mjs\"",
+    "test:session": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/session-changes.test.mjs\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
