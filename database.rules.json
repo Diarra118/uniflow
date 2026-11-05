@@ -5,7 +5,7 @@
 
     "users": {
       "$uid": {
-        ".read": "auth != null && ((auth.uid === $uid) || (auth.token.role === 'admin_universite' && auth.token.universityId != null && root.child('users').child($uid).child('universityId').val() === auth.token.universityId))",
+        ".read": "auth != null && ((auth.uid === $uid) || (auth.token.role === 'admin_universite' && auth.token.universityId != null && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && root.child('users').child($uid).child('universityId').val() === auth.token.universityId))",
         ".write": false
       }
     },
@@ -14,32 +14,32 @@
       "$universityId": {
 
         "meta": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student' || auth.token.role === 'parent')",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student' || auth.token.role === 'parent')",
           ".write": false
         },
 
         "parentLinks": {
           "$parentUid": {
-            ".read": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'parent' && auth.uid === $parentUid) || (auth.token.role === 'admin_universite'))",
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'parent' && auth.uid === $parentUid) || (auth.token.role === 'admin_universite'))",
             "$studentId": {
-              ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+              ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
             }
           }
         },
 
         "students": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           ".indexOn": ["lastName", "searchKey"],
           "$studentId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'student' && data.child('uid').val() === auth.uid",
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'student' && data.child('uid').val() === auth.uid",
             ".validate": "(!data.child('uid').exists()) || (newData.child('uid').val() === data.child('uid').val()) || (!newData.exists())",
             "uid": { ".validate": "newData.val() === data.val()" }
           }
         },
         "teachers": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           ".indexOn": ["lastName", "searchKey"],
           "$teacherId": {
             ".validate": "(!data.child('uid').exists()) || (newData.child('uid').val() === data.child('uid').val()) || (!newData.exists())",
@@ -47,92 +47,92 @@
           }
         },
         "programs": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           ".indexOn": ["name"]
         },
         "courses": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           ".indexOn": ["name"]
         },
         "classes": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           ".indexOn": ["name"]
         },
 
         "grades": {
           "$gradeId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher') || (auth.token.role === 'student' && data.child('studentId').val() === auth.uid) || (auth.token.role === 'parent' && data.child('studentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('studentId').val()).child('authorized').val() === true))",
-            ".write": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher' && newData.exists() && (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))))",
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher') || (auth.token.role === 'student' && data.child('studentId').val() === auth.uid) || (auth.token.role === 'parent' && data.child('studentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('studentId').val()).child('authorized').val() === true))",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher' && newData.exists() && (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))))",
             ".validate": "newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).exists() && newData.child('updatedBy').val() === auth.uid && ((!data.exists() && newData.child('createdBy').val() === auth.uid) || (data.exists() && newData.child('createdBy').val() === data.child('createdBy').val() && (newData.child('courseId').val() === data.child('courseId').val() || auth.token.role === 'admin_universite'))) && newData.child('studentId').isString()"
           }
         },
         "exams": {
           "$examId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-            ".write": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher' && newData.exists() && (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))))",
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher' && newData.exists() && (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))))",
             ".validate": "newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).exists() && newData.child('updatedBy').val() === auth.uid && ((!data.exists() && newData.child('createdBy').val() === auth.uid) || (data.exists() && newData.child('createdBy').val() === data.child('createdBy').val() && (newData.child('courseId').val() === data.child('courseId').val() || auth.token.role === 'admin_universite')))"
           }
         },
 
         "enrollments": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           "$enrollmentId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'student' && data.child('studentId').isString() && root.child('universities').child($universityId).child('students').child(data.child('studentId').val()).child('uid').val() === auth.uid"
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'student' && data.child('studentId').isString() && root.child('universities').child($universityId).child('students').child(data.child('studentId').val()).child('uid').val() === auth.uid"
           }
         },
 
         "payments": {
           "$paymentId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'student' && data.child('studentId').val() === auth.uid) || (auth.token.role === 'parent' && data.child('studentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('studentId').val()).child('authorized').val() === true))",
-            ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'student' && data.child('studentId').val() === auth.uid) || (auth.token.role === 'parent' && data.child('studentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('studentId').val()).child('authorized').val() === true))",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
           }
         },
 
         "documents": {
           "$documentId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher') || (auth.token.role === 'student' && data.child('ownerUid').val() === auth.uid) || (auth.token.role === 'parent' && data.child('ownerStudentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('ownerStudentId').val()).child('authorized').val() === true))",
-            ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && ((auth.token.role === 'admin_universite') || (auth.token.role === 'teacher') || (auth.token.role === 'student' && data.child('ownerUid').val() === auth.uid) || (auth.token.role === 'parent' && data.child('ownerStudentId').isString() && root.child('universities').child($universityId).child('parentLinks').child(auth.uid).child(data.child('ownerStudentId').val()).child('authorized').val() === true))",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
           }
         },
 
         "library": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
         },
         "elearning": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
           "$contentId": {
-            ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'teacher' && (!newData.exists() || (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid)) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'teacher' && (!newData.exists() || (newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid)) && (!data.exists() || (data.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').isString() && root.child('universities').child($universityId).child('teachers').child(root.child('universities').child($universityId).child('courses').child(data.child('courseId').val()).child('teacherId').val()).child('uid').val() === auth.uid))",
             ".validate": "newData.child('courseId').isString() && root.child('universities').child($universityId).child('courses').child(newData.child('courseId').val()).exists() && newData.child('updatedBy').val() === auth.uid && ((!data.exists() && newData.child('createdBy').val() === auth.uid) || (data.exists() && newData.child('createdBy').val() === data.child('createdBy').val() && (newData.child('courseId').val() === data.child('courseId').val() || auth.token.role === 'admin_universite')))"
           }
         },
 
         "notifications": {
           "$notificationId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student' || auth.token.role === 'parent') && data.child('recipientUid').val() === auth.uid",
-            ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student' || auth.token.role === 'parent') && data.child('recipientUid').val() === auth.uid",
+            ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
           }
         },
 
         "academicYears": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
-          ".write": "auth != null && auth.token.universityId === $universityId && auth.token.role === 'admin_universite'"
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".write": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'"
         },
 
         "aiInsights": {
           "$studentId": {
-            ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
+            ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
             ".write": false
           }
         },
 
         "indexes": {
-          ".read": "auth != null && auth.token.universityId === $universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher' || auth.token.role === 'student')",
           ".write": false
         }
       }
@@ -140,7 +140,7 @@
 
     "platform": {
       "universitiesIndex": {
-        ".read": "auth != null && auth.token.role === 'super_admin_plateforme'",
+        ".read": "auth != null && auth.token.role === 'super_admin_plateforme' && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId",
         ".write": false,
         "$universityId": {
           ".indexOn": ["plan", "status"]

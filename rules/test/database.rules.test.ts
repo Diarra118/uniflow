@@ -5,6 +5,7 @@
  * Java 17+ requis par l'émulateur.
  */
 import { after, before, beforeEach, describe, test } from 'node:test'
+import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   assertFails,
@@ -31,6 +32,8 @@ const IDS: Record<string, { uid: string; claims?: Claims }> = {
   teacherA2: { uid: 'teacherA2', claims: { role: 'teacher', universityId: 'A' } },
   // Enseignant authentifié mais sans fiche teachers/* liée (aucun cours).
   teacherNoRecord: { uid: 'teacherNoRecord', claims: { role: 'teacher', universityId: 'A' } },
+  // Claims valides mais AUCUN profil /users (compte supprimé côté serveur).
+  ghostTeacherA: { uid: 'ghostTeacherA', claims: { role: 'teacher', universityId: 'A' } },
   studentA: { uid: 'studentA', claims: { role: 'student', universityId: 'A' } },
   studentA2: { uid: 'studentA2', claims: { role: 'student', universityId: 'A' } },
   parentA: { uid: 'parentA', claims: { role: 'parent', universityId: 'A' } },
@@ -78,6 +81,13 @@ const SEED = {
     studentA2: { uid: 'studentA2', role: 'student', universityId: 'A', status: 'active', linkedRecordId: 's2' },
     userB: { uid: 'userB', role: 'student', universityId: 'B', status: 'active' },
     superAdmin: { uid: 'superAdmin', role: 'super_admin_plateforme', status: 'active' },
+    // Profils actifs conformes aux tokens : les règles exigent désormais
+    // /users/{uid} actif avec le même rôle et la même université.
+    teacherA2: { uid: 'teacherA2', role: 'teacher', universityId: 'A', status: 'active' },
+    teacherNoRecord: { uid: 'teacherNoRecord', role: 'teacher', universityId: 'A', status: 'active' },
+    parentA: { uid: 'parentA', role: 'parent', universityId: 'A', status: 'active' },
+    adminB: { uid: 'adminB', role: 'admin_universite', universityId: 'B', status: 'active' },
+    parentB: { uid: 'parentB', role: 'parent', universityId: 'B', status: 'active' },
   },
   universities: {
     A: {
@@ -525,5 +535,103 @@ describe('aiInsights, indexes, platform', () => {
     await assertFails(read('adminA', 'platform/universitiesIndex'))
     await assertFails(read('adminA', 'platform/universitiesIndex/A'))
     await assertFails(write('superAdmin', 'platform/universitiesIndex/A/plan', 'enterprise'))
+  })
+})
+
+// ---------------------------------------------------------------------
+// 24. Révocation immédiate : profil /users actif et conforme au token
+// ---------------------------------------------------------------------
+
+const asAdminSdk = (fn: (root: CompatDatabase) => Promise<unknown>) =>
+  env.withSecurityRulesDisabled(async (ctx) => {
+    await fn(ctx.database())
+  })
+
+/** Écouteur temps réel : nombre de valeurs reçues et éventuelle annulation. */
+function listen(who: Who, path: string) {
+  const ref = db(who).ref(path)
+  const state = { values: 0, cancelled: null as string | null }
+  ref.on(
+    'value',
+    () => { state.values++ },
+    (err: unknown) => { state.cancelled = String((err as { code?: string })?.code ?? err) }
+  )
+  return { state, off: () => ref.off() }
+}
+
+async function waitFor(cond: () => boolean, ms = 8000) {
+  const end = Date.now() + ms
+  while (Date.now() < end) {
+    if (cond()) return true
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  return cond()
+}
+
+describe('24. révocation immédiate (profil /users)', () => {
+  test('suspension : la liste déjà ouverte est coupée et les nouvelles lectures refusées', async () => {
+    const l = listen('teacherA', `${A}/students`)
+    assert.ok(await waitFor(() => l.state.values > 0), 'liste chargée avant la suspension')
+    await asAdminSdk((root) => root.ref('users/teacherA/status').set('suspended'))
+    assert.ok(await waitFor(() => l.state.cancelled !== null), 'écouteur annulé après la suspension')
+    l.off()
+    await assertFails(read('teacherA', `${A}/students`))
+    await assertFails(read('teacherA', `${A}/programs`))
+    await assertFails(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', { studentId: 'studentA' })))
+  })
+
+  test('changement de rôle : l’ancien accès est retiré immédiatement', async () => {
+    const l = listen('teacherA', `${A}/teachers`)
+    assert.ok(await waitFor(() => l.state.values > 0))
+    // Le profil passe étudiant ; le token porte encore « teacher ».
+    await asAdminSdk((root) => root.ref('users/teacherA/role').set('student'))
+    assert.ok(await waitFor(() => l.state.cancelled !== null), 'écouteur annulé après le changement de rôle')
+    l.off()
+    await assertFails(read('teacherA', `${A}/students`))
+    await assertFails(read('teacherA', `${A}/teachers`))
+  })
+
+  test('changement d’université : accès refusé', async () => {
+    await asAdminSdk((root) => root.ref('users/teacherA/universityId').set('B'))
+    await assertFails(read('teacherA', `${A}/students`))
+    await assertFails(read('teacherA', 'universities/B/students'))
+  })
+
+  test('profil absent ou supprimé : accès refusé', async () => {
+    await assertFails(read('ghostTeacherA', `${A}/students`))
+    await assertFails(read('ghostTeacherA', `${A}/meta`))
+    await asAdminSdk((root) => root.ref('users/studentA').remove())
+    await assertFails(read('studentA', `${A}/students/s1`))
+    await assertFails(read('studentA', `${A}/grades/g1`))
+  })
+
+  test('profil en attente (pending) : accès refusé', async () => {
+    await asAdminSdk((root) => root.ref('users/parentA/status').set('pending'))
+    await assertFails(read('parentA', `${A}/grades/g1`))
+    await assertFails(read('parentA', `${A}/parentLinks/parentA`))
+  })
+
+  test('admin et super_admin suspendus : plus de lecture des profils ni de l’index', async () => {
+    await asAdminSdk((root) => root.ref().update({ 'users/adminA/status': 'suspended', 'users/superAdmin/status': 'suspended' }))
+    await assertFails(read('adminA', 'users/studentA'))
+    await assertFails(write('adminA', `${A}/programs/x`, { name: 'x' }))
+    await assertFails(read('superAdmin', 'platform/universitiesIndex'))
+  })
+
+  test('son propre profil reste lisible (l’interface y lit la suspension)', async () => {
+    await asAdminSdk((root) => root.ref('users/studentA/status').set('suspended'))
+    const snap = await read('studentA', 'users/studentA')
+    assert.equal(snap.val().status, 'suspended')
+    await asAdminSdk((root) => root.ref('users/studentA').remove())
+    assert.equal((await read('studentA', 'users/studentA')).val(), null)
+  })
+
+  test('réactivation : l’utilisateur retrouve exactement ses droits', async () => {
+    await asAdminSdk((root) => root.ref('users/teacherA/status').set('suspended'))
+    await assertFails(read('teacherA', `${A}/students`))
+    await asAdminSdk((root) => root.ref('users/teacherA/status').set('active'))
+    await assertSucceeds(read('teacherA', `${A}/students`))
+    await assertSucceeds(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', { studentId: 'studentA' })))
+    await assertFails(read('teacherA', `${A}/payments/pay1`))
   })
 })
