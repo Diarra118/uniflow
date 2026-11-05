@@ -63,18 +63,22 @@ export const PERMISSIONS: PermissionMatrix = {
     academicYears: ALL,
     aiInsights: RO,
   },
+  // Enseignant : les écritures sur grades, exams et elearning sont limitées
+  // par les Security Rules aux cours dont il est responsable
+  // (courses/{courseId}/teacherId → teachers/{id}/uid === auth.uid). Cette
+  // matrice dit QUELLES actions existent, les règles disent SUR QUOI.
   teacher: {
     students: RO,
     teachers: RO,
     programs: RO,
     courses: RO,
     classes: RO,
-    grades: RW,
-    exams: RW,
+    grades: RW, // créer / modifier sur ses cours, jamais supprimer
+    exams: RW, // idem
     enrollments: RO,
     documents: RO,
     library: RO,
-    elearning: RW,
+    elearning: ALL, // créer / modifier / supprimer sur ses cours
     notifications: RO,
     academicYears: RO,
     aiInsights: RO,

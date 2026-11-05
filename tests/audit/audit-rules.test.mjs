@@ -45,6 +45,9 @@ const W = (who, p, v) => db(who).ref(p).set(v)
 const U = (who, p, v) => db(who).ref(p).update(v)
 const D = (who, p) => db(who).ref(p).remove()
 
+// Schéma exigé par les .validate de grades / exams / elearning.
+const byAdmin = (t, courseId) => ({ courseId, createdBy: `admin${t}`, updatedBy: `admin${t}` })
+
 function tenant(t) {
   const s = t.toLowerCase()
   return {
@@ -60,18 +63,19 @@ function tenant(t) {
     },
     teachers: { [`t${s}1`]: { firstName: 'Moussa', email: `m@${s}.edu`, uid: `teacher${t}` } },
     programs: { p1: { name: 'Info' } },
-    courses: { c1: { name: 'Algo' } },
+    // c1 confié à la fiche enseignant t<x>1 (uid teacher<T>), c2 à personne.
+    courses: { c1: { name: 'Algo', teacherId: `t${s}1` }, c2: { name: 'Sans responsable' } },
     classes: { k1: { name: 'L1' } },
     library: { l1: { title: 'Livre' } },
-    elearning: { e1: { title: 'Module' } },
+    elearning: { e1: { title: 'Module', ...byAdmin(t, 'c1') }, e2: { title: 'Autre', ...byAdmin(t, 'c2') } },
     academicYears: { y1: { label: '2026' } },
     indexes: { i1: { v: 1 } },
-    exams: { x1: { title: 'Partiel' } },
+    exams: { x1: { title: 'Partiel', ...byAdmin(t, 'c1') }, x2: { title: 'Autre', ...byAdmin(t, 'c2') } },
     enrollments: { en1: { studentId: `${s}1` }, en2: { studentId: `${s}2` } },
     grades: {
-      g1: { studentId: `student${t}`, value: 15 },
-      g2: { studentId: `student${t}2`, value: 9 },
-      g3: { studentId: 'sansLien', value: 11 },
+      g1: { studentId: `student${t}`, value: 15, ...byAdmin(t, 'c1') },
+      g2: { studentId: `student${t}2`, value: 9, ...byAdmin(t, 'c1') },
+      g3: { studentId: 'sansLien', value: 11, ...byAdmin(t, 'c2') },
     },
     payments: { pay1: { studentId: `student${t}`, amount: 100 }, pay2: { studentId: `student${t}2`, amount: 50 } },
     documents: {
@@ -263,6 +267,40 @@ describe('5e + 3. non authentifié et claims invalides', () => {
 })
 
 // ---------------------------------------------------------------------
+// Lot 2. Enseignant : écritures limitées à ses cours
+// ---------------------------------------------------------------------
+describe('lot 2. enseignant limité à ses cours', () => {
+  const A = 'universities/A'
+  const mine = { courseId: 'c1', createdBy: 'teacherA', updatedBy: 'teacherA' }
+  const other = { courseId: 'c2', createdBy: 'teacherA', updatedBy: 'teacherA' }
+  test('grades / exams : création et modification sur son cours, aucune suppression', async () => {
+    for (const [coll, id, extra] of [['grades', 'g1', { studentId: 'studentA' }], ['exams', 'x1', {}]]) {
+      await assertSucceeds(W('teacherA', `${A}/${coll}/t-new`, { ...extra, ...mine }))
+      await assertSucceeds(U('teacherA', `${A}/${coll}/${id}`, { auditField: 1, updatedBy: 'teacherA' }))
+      await assertFails(D('teacherA', `${A}/${coll}/${id}`))
+      await assertFails(W('teacherA', `${A}/${coll}/t-other`, { ...extra, ...other }))
+    }
+    await assertFails(U('teacherA', `${A}/grades/g3`, { auditField: 1, updatedBy: 'teacherA' }))
+    await assertFails(U('teacherA', `${A}/exams/x2`, { auditField: 1, updatedBy: 'teacherA' }))
+  })
+  test('elearning : CRUD sur son cours uniquement', async () => {
+    await assertSucceeds(W('teacherA', `${A}/elearning/t-new`, { title: 't', ...mine }))
+    await assertSucceeds(D('teacherA', `${A}/elearning/e1`))
+    await assertFails(W('teacherA', `${A}/elearning/t-other`, { title: 't', ...other }))
+    await assertFails(D('teacherA', `${A}/elearning/e2`))
+  })
+  test('documents / notifications : aucune écriture enseignant', async () => {
+    for (const p of [`${A}/documents/d1`, `${A}/documents/t-new`, `${A}/notifications/n_teacherA`, `${A}/notifications/t-new`]) {
+      await assertFails(W('teacherA', p, { recipientUid: 'studentA', ownerUid: 'studentA' }))
+      await assertFails(D('teacherA', p))
+    }
+  })
+  test('autre université : jamais, même avec un cours au même identifiant', async () => {
+    await assertFails(W('teacherA', 'universities/B/grades/t-new', { studentId: 'studentB', ...mine }))
+  })
+})
+
+// ---------------------------------------------------------------------
 // 4. Matrice RBAC : permissions.ts (UI) vs Security Rules (réel)
 // ---------------------------------------------------------------------
 const RES = {
@@ -296,8 +334,9 @@ describe('4. matrice RBAC UI vs règles', () => {
         const readTarget = spec.list && role !== 'student' && role !== 'parent' ? spec.list : spec.item
         const ops = {
           read: () => R(uid, sub(readTarget)),
-          create: () => W(uid, sub(`${parent}/audit-${uid}`), { name: 'audit', studentId: 'studentA', recipientUid: uid }),
-          update: () => U(uid, sub(spec.item), { auditField: 1 }),
+          // Écritures « valides » au sens des .validate, sur le cours de l'enseignant (c1).
+          create: () => W(uid, sub(`${parent}/audit-${uid}`), { name: 'audit', studentId: 'studentA', recipientUid: uid, courseId: 'c1', createdBy: uid, updatedBy: uid }),
+          update: () => U(uid, sub(spec.item), { auditField: 1, updatedBy: uid }),
           delete: () => D(uid, sub(spec.del)),
         }
         for (const action of ['read', 'create', 'update', 'delete']) {
