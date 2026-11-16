@@ -94,11 +94,20 @@ async function acceptInvitation(kind) {
   // La page d'action de l'émulateur Auth n'a pas de formulaire : elle prend le
   // nouveau mot de passe en paramètre `newPassword` (fonctionnement documenté
   // par l'émulateur). En production, c'est la page Firebase qui le demande.
+  //
+  // Après succès, l'émulateur répond 303 vers continueUrl (APP_LOGIN_URL du
+  // projet demo : http://localhost:5173/login), serveur absent pendant les
+  // tests (port du serveur de test : 5182). Le lien est donc ouvert avec
+  // continueUrl = page de connexion du serveur de test : le navigateur suit
+  // la vraie redirection et on vérifie que l'utilisateur ARRIVE sur /login.
   const { ctx, page } = await newPage(`invitation-${kind}`)
-  const res2 = await page.goto(`${codes[0].oobLink}&newPassword=${encodeURIComponent(passwords[kind])}`)
-  const body = await page.locator('body').innerText()
-  assert.ok(res2 && res2.status() < 400 && !/"error"/.test(body), `invitation ${kind} acceptée (HTTP ${res2?.status()})`)
-  linkMode[kind] = `page d'action de l'émulateur ouverte dans le navigateur (HTTP ${res2.status()})`
+  const link = new URL(codes[0].oobLink)
+  link.searchParams.set('continueUrl', `${BASE}/login`)
+  link.searchParams.set('newPassword', passwords[kind])
+  await page.goto(link.toString())
+  await page.waitForURL(`${BASE}/login`, { timeout: 15000 })
+  await page.locator('#email').waitFor()
+  linkMode[kind] = "page d'action de l'émulateur (navigateur) → redirection vers /login"
   await ctx.close()
 }
 
