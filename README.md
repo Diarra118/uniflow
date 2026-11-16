@@ -132,18 +132,17 @@ alors que l'émulateur Database charge `database.rules.json` sur
 **lancez toujours le seed** avant d'utiliser l'application, sinon ce
 namespace n'a pas les règles du projet. Production non concernée.
 
-**Limite : déclencheur `onUserProfileWritten` inactif en local.**
-L'émulateur ne le déclenche pas (« function region is defined outside the
-database region, will not trigger » : la base d'un projet `demo-*` est
-supposée en `us-central1`, la fonction est en `europe-west1`). En local :
-- les claims des comptes créés depuis l'interface sont posés directement
-  par `createUserAccount` (fonctionne) ;
-- les claims de l'admin du seed sont posés par le seed ;
-- modifier ou suspendre un profil `/users/{uid}` ne change **pas** ses
-  claims (pas de retrait ni de révocation automatique).
-
-Sa logique est couverte par des tests unitaires (`syncClaimsCore`) ; son
-déclenchement réel **reste à vérifier en recette** après déploiement.
+**Déclencheur `onUserProfileWritten` actif en local.** L'émulateur
+Database n'exécute un déclencheur v2 que s'il est déclaré en `us-central1`.
+La région du déclencheur vaut donc `us-central1` **sous l'émulateur
+uniquement** (variable `FUNCTIONS_EMULATOR`, posée par l'émulateur), et
+reste `europe-west1` en production : voir
+`functions/src/auth/triggerRegion.ts` et son test. En local, créer,
+modifier, suspendre ou supprimer un profil `/users/{uid}` met donc à jour
+ses claims (et révoque ses sessions en cas de suspension), comme en
+production ; `npm run test:audit:server` le vérifie. Limite de l'émulateur
+Auth : il ne refuse pas un refresh token révoqué (la production, si) ; un
+ID token révoqué, lui, est bien refusé.
 
 ### Configuration requise avant déploiement
 

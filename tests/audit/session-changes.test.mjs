@@ -1,7 +1,12 @@
 // Réaction de l'interface aux changements de /users/{uid} d'un utilisateur
 // CONNECTÉ (lot 3, partie 3) : suspension / suppression → déconnexion avec
 // message ; changement de rôle → renouvellement du token et interface mise à
-// jour. Émulateurs Auth + Database + Functions, Edge headless.
+// jour. Émulateurs Auth + Database, Edge headless.
+// Volontairement SANS l'émulateur Functions : le déclencheur
+// onUserProfileWritten est absent, et le test pose lui-même les claims au
+// moment voulu (comme le ferait le déclencheur), ce qui permet aussi de
+// simuler sa panne (scénario 4). Le déclencheur réel est testé par
+// npm run test:audit:server.
 // Lancer depuis la racine : npm run test:session. Aucun secret affiché.
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
@@ -81,7 +86,7 @@ async function until(t0, cond, timeoutMs = 20000) {
 test('suspension : déconnexion immédiate avec message en français', async () => {
   const { ctx, page } = await openStudents('s1')
   const t0 = Date.now()
-  // Ce que fait le déclencheur en production (non déclenché par l'émulateur).
+  // Ce que fait le déclencheur (absent de cette suite).
   await app.database().ref('users/sess-s1/status').set('suspended')
   await app.auth().setCustomUserClaims('sess-s1', {})
   await app.auth().revokeRefreshTokens('sess-s1')
@@ -124,7 +129,7 @@ test('changement de rôle : token renouvelé, interface basculée vers le nouvea
       timeline.push(`${i + 1}s: ${txt.slice(0, 120)}`)
     }
   })()
-  // En production, le déclencheur pose les nouveaux claims juste après.
+  // Le déclencheur pose les nouveaux claims juste après.
   await sleep(1000)
   await app.auth().setCustomUserClaims('sess-s3', { role: 'student', universityId: U })
   const dataGoneMs = await dataGone
@@ -146,7 +151,7 @@ test('changement de rôle : token renouvelé, interface basculée vers le nouvea
 test('changement de rôle sans mise à jour des claims : déconnexion après les tentatives', async () => {
   const { ctx, page } = await openStudents('s4')
   const t0 = Date.now()
-  await app.database().ref('users/sess-s4/role').set('student') // claims inchangés
+  await app.database().ref('users/sess-s4/role').set('student') // claims inchangés (panne du déclencheur)
   const dataGoneMs = await until(t0, async () => (await page.getByText(seed.SEED.student.lastName).count()) === 0)
   const messageMs = await until(t0, async () =>
     page.url().endsWith('/login') && (await page.getByText('Vos droits ont été modifiés').isVisible()), 40000)

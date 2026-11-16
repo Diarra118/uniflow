@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin'
 import { onValueWritten } from 'firebase-functions/v2/database'
 import { logger } from 'firebase-functions/v2'
 import { syncClaimsCore, type ClaimsDeps } from './syncClaimsCore'
+import { profileTriggerRegion } from './triggerRegion'
 
 if (admin.apps.length === 0) {
   admin.initializeApp()
@@ -37,9 +38,12 @@ function claimsDeps(): ClaimsDeps {
  * se fondant sur l'état courant du profil et du compte Auth (voir
  * syncClaimsCore.ts) : claims posés uniquement si status === "active" et
  * compte Auth actif ; suspension = claims vidés + sessions révoquées.
+ *
+ * Région : europe-west1 en production ; us-central1 sous l'émulateur
+ * seulement, pour qu'il s'y déclenche (voir triggerRegion.ts).
  */
 export const onUserProfileWritten = onValueWritten(
-  { ref: '/users/{uid}', region: 'europe-west1' },
+  { ref: '/users/{uid}', region: profileTriggerRegion() },
   async (event) => {
     await syncClaimsCore(claimsDeps(), event.params.uid as string, !event.data.after.exists())
   }

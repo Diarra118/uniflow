@@ -132,7 +132,11 @@ Premier administrateur : soit avec `create-test-user.js` et les variables du
 § 3, soit à la main (voir le test R1 ci-dessous), puis créer
 `/universities/{universityId}/meta`.
 
-## 6. Tests de `onUserProfileWritten` (non testable en émulateur)
+## 6. Tests de `onUserProfileWritten` (déployé en `europe-west1`)
+
+En local, le déclencheur s'exécute sous l'émulateur avec la région
+`us-central1` (`npm run test:audit:server`). La recette vérifie son
+fonctionnement réel en `europe-west1`, avec la base de la même région.
 
 Suivi des exécutions :
 `firebase functions:log --only onUserProfileWritten --project <ID_RECETTE>`,

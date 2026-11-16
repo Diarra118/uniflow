@@ -78,27 +78,49 @@ test('un client ne peut pas écrire son profil /users (règles, token réel de l
   assert.equal((await appR.database().ref('users/client2').get()).val(), null)
 })
 
-// L'émulateur ne déclenche pas onUserProfileWritten (« function region is
-// defined outside the database region, will not trigger » : base d'un projet
-// demo-* supposée en us-central1, fonction en europe-west1). Ces deux tests
-// s'exécutent et documentent le comportement, sans faire échouer la suite.
-const TRIGGER_TODO = { todo: 'limite émulateur : région du déclencheur (à vérifier en recette)' }
+// Le déclencheur onUserProfileWritten s'exécute sous l'émulateur : sa région y
+// vaut us-central1 (seule région que l'émulateur Database déclenche), contre
+// europe-west1 en production (functions/src/auth/triggerRegion.ts).
 
-test('serveur : écriture Admin SDK de /users (actif) → le déclencheur pose role + universityId', TRIGGER_TODO, async () => {
-  await newUser('trig1')
+let trig1Password
+test('serveur : écriture Admin SDK de /users (actif) → le déclencheur pose role + universityId', async () => {
+  trig1Password = await newUser('trig1')
   await appF.database().ref('users/trig1').set({ role: 'teacher', universityId: 'A', status: 'active' })
   const claims = await waitClaims('trig1', (c) => c.role === 'teacher', 25000)
   assert.deepEqual(claims, { role: 'teacher', universityId: 'A' })
 })
 
-test('serveur : passage en suspended → claims vidés et sessions révoquées', TRIGGER_TODO, async () => {
+test('serveur : passage en suspended → claims vidés et sessions révoquées', async () => {
   const before = (await appF.auth().getUser('trig1')).tokensValidAfterTime
+  // Session ouverte AVANT la suspension : son refresh token doit être refusé après.
+  const session = await (await fetch(`${TOOLKIT}/accounts:signInWithPassword?key=emulator`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'trig1@audit.test', password: trig1Password, returnSecureToken: true }),
+  })).json()
+  assert.ok(session.refreshToken, 'session ouverte')
   await sleep(1100)
   await appF.database().ref('users/trig1/status').set('suspended')
   const claims = await waitClaims('trig1', (c) => !c.role, 25000)
   assert.deepEqual(claims, {})
   const afterT = (await appF.auth().getUser('trig1')).tokensValidAfterTime
   assert.notEqual(afterT, before, 'tokensValidAfterTime avancé (revokeRefreshTokens)')
+  // Le token de la session d'avant la suspension est révoqué : refusé par
+  // l'Admin SDK (contrôle de révocation) et par l'API Auth.
+  await assert.rejects(appF.auth().verifyIdToken(session.idToken, true), { code: 'auth/id-token-revoked' })
+  const lookup = await fetch(`${TOOLKIT}/accounts:lookup?key=emulator`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: session.idToken }),
+  })
+  assert.equal(lookup.status, 400)
+  assert.equal((await lookup.json()).error?.message, 'TOKEN_EXPIRED')
+  // Constat : l'émulateur Auth ne contrôle pas la révocation lors du
+  // rafraîchissement (la production répond TOKEN_EXPIRED). Pas d'assertion.
+  const refresh = await fetch(`http://${AUTH}/securetoken.googleapis.com/v1/token?key=emulator`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: session.refreshToken }),
+  })
+  const body = await refresh.json()
+  console.log(`# refresh token d'avant la suspension (émulateur) -> HTTP ${refresh.status} ${body.error?.message ?? 'OK'}`)
 })
 
 test('serveur : status pending → aucun claim', async () => {

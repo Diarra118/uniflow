@@ -69,9 +69,9 @@ export async function syncClaimsCore(
   }
 
   if (current.status === 'suspended') {
-    // Les Security Rules ne lisent PAS `status` : seuls les claims comptent.
-    // On les vide et on révoque les refresh tokens ; un ID token déjà émis
-    // reste accepté par les règles jusqu'à son expiration (≤ 1 h). Les
+    // Les Security Rules coupent déjà l'accès (elles exigent un profil
+    // `status: "active"` conforme au token). On vide aussi les claims et on
+    // révoque les refresh tokens, pour qu'aucune session ne se prolonge. Les
     // callables relisent /users/{uid}.status à chaque appel.
     try {
       await deps.setCustomUserClaims(uid, {})
