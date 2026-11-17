@@ -127,7 +127,7 @@ export function StudentFormModal({
             onChange={(v) => set('studentNumber', v)}
           />
           <Field
-            label="Email"
+            label="E-mail"
             type="email"
             value={values.email}
             error={fieldErrors.email}
@@ -184,7 +184,7 @@ export function StudentFormModal({
                   ))}
               </select>
               {!values.programId && (
-                <p className="mt-1 text-xs text-base-content/40">
+                <p className="mt-1 text-xs text-base-content/65">
                   Sélectionnez d'abord une filière.
                 </p>
               )}

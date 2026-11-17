@@ -16,9 +16,9 @@ export function CreateLoginAccessCheckbox({
       />
       <span>
         <span className="block text-sm font-medium">Créer un accès de connexion</span>
-        <span className="block text-xs text-base-content/50">
-          Un compte sera créé avec l'email de la fiche, et la personne recevra une invitation
-          par email pour définir son mot de passe.
+        <span className="block text-xs text-base-content/65">
+          Un compte sera créé avec l'adresse e-mail de la fiche, et la personne recevra une invitation
+          par e-mail pour définir son mot de passe.
         </span>
       </span>
     </label>

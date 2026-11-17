@@ -28,11 +28,11 @@ export function LoginAccessCard({
     <div className="rounded-box border border-base-300 bg-base-100 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs text-base-content/50">Accès de connexion</p>
+          <p className="text-xs text-base-content/65">Accès de connexion</p>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge tone={activeTone(!!uid)}>{uid ? 'Accès créé' : "Pas d'accès"}</StatusBadge>
           </div>
-          <p className="mt-1 text-xs text-base-content/50">
+          <p className="mt-1 text-xs text-base-content/65">
             {uid
               ? `Connexion avec l'adresse ${email}.`
               : 'Cette personne ne peut pas encore se connecter à la plateforme.'}

@@ -6,7 +6,7 @@ import { useAuth } from '@/core/firebase/AuthContext'
 import { BrandMark } from '@/shared/components/BrandMark'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
-const schema = z.object({ email: z.string().email('Adresse email invalide') })
+const schema = z.object({ email: z.string().email('Adresse e-mail invalide') })
 
 export function ForgotPasswordPage() {
   const { resetPassword } = useAuth()
@@ -45,7 +45,7 @@ export function ForgotPasswordPage() {
         {sent ? (
           <div className="flex flex-col items-center py-4 text-center">
             <CheckCircle2 size={32} className="mb-3 text-success" />
-            <h1 className="font-display text-lg font-semibold">Email envoyé</h1>
+            <h1 className="font-display text-lg font-semibold">E-mail envoyé</h1>
             <p className="mt-1 text-sm text-base-content/70">
               Si un compte existe pour {email}, vous recevrez un lien de réinitialisation.
             </p>
@@ -58,7 +58,7 @@ export function ForgotPasswordPage() {
           <>
             <h1 className="font-display text-xl font-semibold">Mot de passe oublié</h1>
             <p className="mt-1 text-sm text-base-content/70">
-              Indiquez votre email pour recevoir un lien de réinitialisation.
+              Indiquez votre adresse e-mail pour recevoir un lien de réinitialisation.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">

@@ -151,3 +151,14 @@ body {
 .brand-panel-accent {
   color: oklch(80% 0.12 85);
 }
+
+/* Libellés de formulaire (DaisyUI .label) : un peu plus soutenus que le
+   défaut pour rester ≥ 4,5:1 sur le fond des fenêtres. */
+.label {
+  color: color-mix(in oklab, var(--color-base-content) 80%, transparent);
+}
+/* Élément actif de la barre latérale en sombre : rouge éclairci (4,3:1 →
+   lisible) sur son fond teinté. */
+[data-theme="uniflow-dark"] .nav-ruled-active {
+  color: color-mix(in oklab, var(--color-primary) 72%, white);
+}

@@ -122,7 +122,7 @@ export function TeachersPage() {
                 <tr>
                   <th>Matricule</th>
                   <th>Nom</th>
-                  <th>Email</th>
+                  <th>E-mail</th>
                   <th>Département</th>
                   <th className="text-right">Compte</th>
                   <th />

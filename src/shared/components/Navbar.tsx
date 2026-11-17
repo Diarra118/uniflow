@@ -36,7 +36,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
               </div>
               <div className="hidden text-left sm:block">
                 <p className="text-xs font-medium leading-tight">{appUser.name}</p>
-                <p className="text-[11px] leading-tight text-base-content/50">
+                <p className="text-[11px] leading-tight text-base-content/65">
                   {ROLE_LABELS[appUser.role]}
                 </p>
               </div>

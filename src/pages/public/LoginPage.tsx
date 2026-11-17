@@ -8,19 +8,19 @@ import { BrandMark } from '@/shared/components/BrandMark'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 const loginSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
+  email: z.string().email('Adresse e-mail invalide'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
 })
 
-const INVALID_CREDENTIALS = 'Email ou mot de passe incorrect.'
+const INVALID_CREDENTIALS = 'E-mail ou mot de passe incorrect.'
 const INVALID_CONFIG = 'Configuration Firebase invalide.'
 
 const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
   'auth/invalid-credential': INVALID_CREDENTIALS,
   'auth/user-not-found': INVALID_CREDENTIALS,
   'auth/wrong-password': INVALID_CREDENTIALS,
-  'auth/invalid-email': 'Adresse email invalide.',
-  'auth/operation-not-allowed': "La connexion par email n'est pas activée.",
+  'auth/invalid-email': 'Adresse e-mail invalide.',
+  'auth/operation-not-allowed': "La connexion par e-mail n'est pas activée.",
   'auth/too-many-requests':
     'Trop de tentatives. Réessayez dans quelques minutes ou réinitialisez votre mot de passe.',
   'auth/network-request-failed': 'Impossible de joindre le serveur. Vérifiez votre connexion.',
@@ -136,7 +136,7 @@ export function LoginPage() {
                 className="mb-1.5 block text-xs font-medium text-base-content/80"
                 htmlFor="email"
               >
-                Email
+                E-mail
               </label>
               <label className="input input-bordered flex w-full items-center gap-2">
                 <Mail size={16} className="text-base-content/50" />

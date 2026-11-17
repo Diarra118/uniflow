@@ -59,7 +59,7 @@ export function TeacherProfilePage() {
     <div className="mx-auto max-w-3xl">
       <Link
         to="/app/teachers"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-base-content/60 hover:text-base-content"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content"
       >
         <ArrowLeft size={15} />
         Retour à la liste
@@ -74,7 +74,7 @@ export function TeacherProfilePage() {
             <h1 className="font-display text-xl font-semibold">
               {teacher.firstName} {teacher.lastName}
             </h1>
-            <p className="font-mono-data text-sm text-base-content/50">{teacher.employeeNumber}</p>
+            <p className="font-mono-data text-sm text-base-content/65">{teacher.employeeNumber}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge tone={activeTone(teacher.accountStatus === 'active')}>
                 Compte {teacher.accountStatus === 'active' ? 'actif' : 'inactif'}
@@ -102,7 +102,7 @@ export function TeacherProfilePage() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <InfoCard label="Email" value={teacher.email} />
+        <InfoCard label="E-mail" value={teacher.email} />
         <InfoCard label="Département" value={teacher.department || '—'} />
         <InfoCard
           label="Dernière mise à jour"
@@ -134,7 +134,7 @@ export function TeacherProfilePage() {
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-box border border-base-300 bg-base-100 p-4">
-      <p className="text-xs text-base-content/50">{label}</p>
+      <p className="text-xs text-base-content/65">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   )

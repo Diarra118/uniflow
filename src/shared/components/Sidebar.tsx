@@ -51,7 +51,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <p className="font-display truncate text-[15px] font-semibold leading-tight">
             {university?.name ?? 'UniFlow'}
           </p>
-          <p className="truncate text-xs text-base-content/50">
+          <p className="truncate text-xs text-base-content/65">
             {appUser ? ROLE_LABELS[appUser.role] : 'Plateforme académique'}
           </p>
         </div>
@@ -111,14 +111,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {!isPlatformAdmin && (
         <div className="mt-6 flex-1 overflow-y-auto px-3">
-          <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wide text-base-content/35">
+          <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wide text-base-content/65">
             Modules à venir
           </p>
           <div className="space-y-0.5">
             {UPCOMING_MODULES.map((m) => (
               <div
                 key={m.label}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-base-content/35"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-base-content/55"
               >
                 <m.icon size={16} strokeWidth={2} />
                 <span className="truncate">{m.label}</span>

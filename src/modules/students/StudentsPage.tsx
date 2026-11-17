@@ -105,7 +105,7 @@ export function StudentsPage() {
         </label>
 
         <select
-          className="select select-bordered select-sm w-full max-w-[200px]"
+          className="select select-bordered w-full max-w-[200px]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
         >
@@ -152,7 +152,7 @@ export function StudentsPage() {
                 <tr>
                   <th>Matricule</th>
                   <th>Nom</th>
-                  <th>Email</th>
+                  <th>E-mail</th>
                   <th>Statut</th>
                   <th className="text-right">Compte</th>
                   <th />
@@ -200,7 +200,7 @@ export function StudentsPage() {
           )}
 
           {isSearching && (
-            <p className="mt-3 text-center text-xs text-base-content/40">
+            <p className="mt-3 text-center text-xs text-base-content/65">
               Résultats de recherche sur nom, prénom et matricule.
             </p>
           )}

@@ -19,7 +19,7 @@ export function EmptyState({
       </div>
       <h3 className="font-display text-base font-semibold">{title}</h3>
       {description && (
-        <p className="mt-1 max-w-sm text-sm text-base-content/60">{description}</p>
+        <p className="mt-1 max-w-sm text-sm text-base-content/70">{description}</p>
       )}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -42,7 +42,7 @@ export function ErrorState({
       </div>
       <h3 className="font-display text-base font-semibold">{title}</h3>
       {description && (
-        <p className="mt-1 max-w-sm text-sm text-base-content/60">{description}</p>
+        <p className="mt-1 max-w-sm text-sm text-base-content/70">{description}</p>
       )}
       {onRetry && (
         <button className="btn btn-sm btn-outline btn-error mt-5" onClick={onRetry}>

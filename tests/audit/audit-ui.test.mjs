@@ -128,7 +128,7 @@ test('routes protégées : visiteur redirigé vers /login', async () => {
 test('connexion : échec avec un mauvais mot de passe', async () => {
   const { ctx, page } = await newPage('login-fail')
   await login(page, 'admin', 'mauvais-mot-de-passe')
-  await page.getByText('Email ou mot de passe incorrect.').waitFor({ timeout: 15000 })
+  await page.getByText('E-mail ou mot de passe incorrect.').waitFor({ timeout: 15000 })
   assert.match(page.url(), /\/login$/)
   await ctx.close()
 })

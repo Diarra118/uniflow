@@ -27,7 +27,7 @@ export function AccountInvitationDialog({
           </div>
           <div>
             <h3 className="font-display text-lg font-semibold">Accès de connexion créé</h3>
-            <p className="text-sm text-base-content/60">{info.name}</p>
+            <p className="text-sm text-base-content/70">{info.name}</p>
           </div>
         </div>
 

@@ -9,7 +9,7 @@ export const studentFormSchema = z.object({
     .max(40, 'Le matricule est trop long'),
   firstName: z.string().trim().min(1, 'Le prénom est requis').max(80),
   lastName: z.string().trim().min(1, 'Le nom est requis').max(80),
-  email: z.string().trim().min(1, "L'email est requis").email('Email invalide'),
+  email: z.string().trim().min(1, "L'adresse e-mail est requise").email('Adresse e-mail invalide'),
   classId: z.string().trim().optional(),
   programId: z.string().trim().optional(),
   enrollmentStatus: z.enum(['enrolled', 'pending', 'graduated', 'withdrawn']),

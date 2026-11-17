@@ -111,7 +111,7 @@ export function TeacherFormModal({
             onChange={(v) => set('employeeNumber', v)}
           />
           <Field
-            label="Email"
+            label="E-mail"
             type="email"
             value={values.email}
             error={fieldErrors.email}

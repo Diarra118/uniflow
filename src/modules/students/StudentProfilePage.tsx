@@ -69,11 +69,11 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
   return (
     <div className="mx-auto max-w-3xl">
       {isOwnRecord ? (
-        <h2 className="mb-4 text-sm font-medium text-base-content/60">Mon dossier</h2>
+        <h2 className="mb-4 text-sm font-medium text-base-content/70">Mon dossier</h2>
       ) : (
         <Link
           to="/app/students"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-base-content/60 hover:text-base-content"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content"
         >
           <ArrowLeft size={15} />
           Retour à la liste
@@ -89,7 +89,7 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
             <h1 className="font-display text-xl font-semibold">
               {student.firstName} {student.lastName}
             </h1>
-            <p className="font-mono-data text-sm text-base-content/50">{student.studentNumber}</p>
+            <p className="font-mono-data text-sm text-base-content/65">{student.studentNumber}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge tone={ENROLLMENT_STATUS_TONE[student.enrollmentStatus]}>
                 {ENROLLMENT_STATUS_LABELS[student.enrollmentStatus]}
@@ -120,7 +120,7 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <InfoCard label="Email" value={student.email} />
+        <InfoCard label="E-mail" value={student.email} />
         <InfoCard
           label="Filière"
           value={programs.find((p) => p.id === student.programId)?.name || '—'}
@@ -161,7 +161,7 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-box border border-base-300 bg-base-100 p-4">
-      <p className="text-xs text-base-content/50">{label}</p>
+      <p className="text-xs text-base-content/65">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   )

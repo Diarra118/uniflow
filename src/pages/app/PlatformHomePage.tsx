@@ -10,9 +10,9 @@ export function PlatformHomePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="text-sm text-base-content/50">Administrateur plateforme</p>
+      <p className="text-sm text-base-content/65">Administrateur plateforme</p>
       <h1 className="font-display text-2xl font-semibold">Espace plateforme</h1>
-      <p className="mt-1 text-sm text-base-content/60">
+      <p className="mt-1 text-sm text-base-content/70">
         Gestion commerciale des universités clientes — aucune donnée pédagogique n'est
         jamais accessible depuis cet espace.
       </p>
