@@ -3,6 +3,8 @@ import { Rows3, Plus, Pencil, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { ListPage, listSubtitle } from '@/shared/components/ListPage'
+import { countLabel } from '@/shared/utils/plural'
 import { usePrograms } from '@/modules/programs/usePrograms'
 import { useClasses } from './useClasses'
 import { createClass, updateClass, setClassStatus } from './api'
@@ -51,15 +53,11 @@ export function ClassesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Classes</h1>
-          <p className="text-sm text-base-content/60">
-            {classes.length} classe(s) — {university?.name}
-          </p>
-        </div>
-        {canCreate && (
+    <ListPage
+      title="Classes"
+      subtitle={listSubtitle(countLabel(classes.length, 'classe'), university?.name)}
+      action={
+        canCreate && (
           <button
             className="btn btn-primary btn-sm gap-2"
             onClick={() => {
@@ -70,8 +68,9 @@ export function ClassesPage() {
             <Plus size={15} />
             Nouvelle classe
           </button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {loading && <TableSkeleton cols={5} />}
       {!loading && error && <ErrorState description={error} />}
@@ -167,6 +166,6 @@ export function ClassesPage() {
         onClose={() => setFormOpen(false)}
         onSubmit={handleSubmit}
       />
-    </div>
+    </ListPage>
   )
 }

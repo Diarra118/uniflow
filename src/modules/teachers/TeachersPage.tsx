@@ -4,6 +4,8 @@ import { Users, Plus, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { ListPage, listSubtitle } from '@/shared/components/ListPage'
+import { countLabel } from '@/shared/utils/plural'
 import { useTeachers } from './useTeachers'
 import { createTeacher } from './api'
 import { TeacherFormModal } from './TeacherFormModal'
@@ -12,7 +14,7 @@ import { useCreateLoginAccess } from '@/modules/accounts/useCreateLoginAccess'
 import { AccountInvitationDialog } from '@/modules/accounts/AccountInvitationDialog'
 
 export function TeachersPage() {
-  const { appUser } = useAuth()
+  const { appUser, university } = useAuth()
   const universityId = appUser?.universityId ?? null
 
   const canCreate = useCan('teachers', 'create')
@@ -20,7 +22,7 @@ export function TeachersPage() {
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
 
-  const { teachers, loading, error, hasMore, isSearching, loadMore } = useTeachers(
+  const { teachers, loading, error, hasMore, loadMore } = useTeachers(
     universityId,
     search
   )
@@ -44,21 +46,21 @@ export function TeachersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Enseignants</h1>
-          <p className="text-sm text-base-content/60">
-            {teachers.length} enseignant(s) {isSearching ? 'trouvé(s)' : 'chargé(s)'}
-          </p>
-        </div>
-        {canCreate && (
+    <ListPage
+      title="Enseignants"
+      subtitle={listSubtitle(
+        countLabel(teachers.length, 'enseignant', 'enseignants', hasMore),
+        university?.name
+      )}
+      action={
+        canCreate && (
           <button className="btn btn-primary btn-sm gap-2" onClick={() => setFormOpen(true)}>
             <Plus size={15} />
             Nouvel enseignant
           </button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {accessFailedFor && access.error && (
         <div className="alert alert-warning mb-4 text-sm">
@@ -174,6 +176,6 @@ export function TeachersPage() {
       />
 
       <AccountInvitationDialog info={access.invitation} onClose={access.dismissInvitation} />
-    </div>
+    </ListPage>
   )
 }

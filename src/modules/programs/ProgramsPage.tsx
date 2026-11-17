@@ -3,6 +3,8 @@ import { Layers, Plus, Pencil, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { ListPage, listSubtitle } from '@/shared/components/ListPage'
+import { countLabel } from '@/shared/utils/plural'
 import { usePrograms } from './usePrograms'
 import { createProgram, updateProgram, setProgramStatus } from './api'
 import { ProgramFormModal } from './ProgramFormModal'
@@ -41,15 +43,11 @@ export function ProgramsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Filières</h1>
-          <p className="text-sm text-base-content/60">
-            {programs.length} filière(s) — {university?.name}
-          </p>
-        </div>
-        {canCreate && (
+    <ListPage
+      title="Filières"
+      subtitle={listSubtitle(countLabel(programs.length, 'filière'), university?.name)}
+      action={
+        canCreate && (
           <button
             className="btn btn-primary btn-sm gap-2"
             onClick={() => {
@@ -60,8 +58,9 @@ export function ProgramsPage() {
             <Plus size={15} />
             Nouvelle filière
           </button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {loading && <TableSkeleton cols={4} />}
       {!loading && error && <ErrorState description={error} />}
@@ -109,7 +108,9 @@ export function ProgramsPage() {
                 <tr key={p.id} className="hover">
                   <td className="font-mono-data text-xs">{p.code}</td>
                   <td>{p.name}</td>
-                  <td className="text-base-content/70">{p.durationYears} an(s)</td>
+                  <td className="text-base-content/70">
+                    {p.durationYears ? countLabel(p.durationYears, 'an') : '—'}
+                  </td>
                   <td>
                     <span
                       className={`badge badge-sm ${p.status === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
@@ -154,6 +155,6 @@ export function ProgramsPage() {
         onClose={() => setFormOpen(false)}
         onSubmit={handleSubmit}
       />
-    </div>
+    </ListPage>
   )
 }

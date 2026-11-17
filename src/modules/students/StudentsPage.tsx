@@ -4,6 +4,8 @@ import { GraduationCap, Plus, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { ListPage, listSubtitle } from '@/shared/components/ListPage'
+import { countLabel } from '@/shared/utils/plural'
 import { useStudents } from './useStudents'
 import { createStudent } from './api'
 import { StudentFormModal } from './StudentFormModal'
@@ -19,7 +21,7 @@ import { AccountInvitationDialog } from '@/modules/accounts/AccountInvitationDia
 type StatusFilter = 'all' | EnrollmentStatus
 
 export function StudentsPage() {
-  const { appUser } = useAuth()
+  const { appUser, university } = useAuth()
   const universityId = appUser?.universityId ?? null
 
   const canCreate = useCan('students', 'create')
@@ -58,21 +60,21 @@ export function StudentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Étudiants</h1>
-          <p className="text-sm text-base-content/60">
-            {students.length} étudiant(s) {isSearching ? 'trouvé(s)' : 'chargé(s)'}
-          </p>
-        </div>
-        {canCreate && (
+    <ListPage
+      title="Étudiants"
+      subtitle={listSubtitle(
+        countLabel(filtered.length, 'étudiant', 'étudiants', hasMore),
+        university?.name
+      )}
+      action={
+        canCreate && (
           <button className="btn btn-primary btn-sm gap-2" onClick={() => setFormOpen(true)}>
             <Plus size={15} />
             Nouvel étudiant
           </button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {accessFailedFor && access.error && (
         <div className="alert alert-warning mb-4 text-sm">
@@ -214,6 +216,6 @@ export function StudentsPage() {
       />
 
       <AccountInvitationDialog info={access.invitation} onClose={access.dismissInvitation} />
-    </div>
+    </ListPage>
   )
 }
