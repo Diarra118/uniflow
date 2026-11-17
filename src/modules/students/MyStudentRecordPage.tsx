@@ -4,6 +4,7 @@ import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState } from '@/shared/components/States'
 import { StudentProfilePage } from './StudentProfilePage'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 /**
  * « Mon dossier » d'un étudiant (permission `ownStudentRecord`). Les règles
@@ -14,6 +15,7 @@ import { StudentProfilePage } from './StudentProfilePage'
 export function MyStudentRecordPage() {
   const { appUser } = useAuth()
   const canReadOwnRecord = useCan('ownStudentRecord', 'read')
+  useDocumentTitle('Mon dossier')
 
   // Défense en profondeur : la route est déjà gardée par ProtectedRoute.
   if (!appUser || !canReadOwnRecord) return <Navigate to="/app" replace />

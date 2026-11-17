@@ -12,6 +12,7 @@ import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { usePrograms } from '@/modules/programs/usePrograms'
 import { useClasses } from '@/modules/classes/useClasses'
 import { LoginAccessCard } from '@/modules/accounts/LoginAccessCard'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 /**
  * Fiche étudiant. Sans prop : identifiant lu dans l'URL (vue admin/enseignant).
@@ -32,6 +33,7 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
   const { classes } = useClasses(universityId)
   const [formOpen, setFormOpen] = useState(false)
   const [togglingStatus, setTogglingStatus] = useState(false)
+  useDocumentTitle(isOwnRecord ? 'Mon dossier' : 'Fiche étudiant')
 
   if (loading) return <FullPageLoader />
   if (error) return <ErrorState description={error} />

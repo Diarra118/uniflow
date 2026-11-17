@@ -10,6 +10,7 @@ import { TeacherFormModal } from './TeacherFormModal'
 import type { TeacherFormValues } from './schema'
 import { LoginAccessCard } from '@/modules/accounts/LoginAccessCard'
 import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 export function TeacherProfilePage() {
   const { teacherId } = useParams<{ teacherId: string }>()
@@ -21,6 +22,7 @@ export function TeacherProfilePage() {
   const { teacher, loading, error } = useTeacher(universityId, teacherId)
   const [formOpen, setFormOpen] = useState(false)
   const [toggling, setToggling] = useState(false)
+  useDocumentTitle('Fiche enseignant')
 
   if (loading) return <FullPageLoader />
   if (error) return <ErrorState description={error} />

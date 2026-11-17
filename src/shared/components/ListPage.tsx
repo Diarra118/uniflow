@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 /**
  * Gabarit commun des pages de liste : même conteneur, même alignement et
@@ -16,6 +17,7 @@ export function ListPage({
   action?: ReactNode
   children: ReactNode
 }) {
+  useDocumentTitle(title)
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

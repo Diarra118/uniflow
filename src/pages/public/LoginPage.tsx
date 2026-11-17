@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { BrandMark } from '@/shared/components/BrandMark'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 const loginSchema = z.object({
   email: z.string().email('Adresse email invalide'),
@@ -46,6 +47,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [retrying, setRetrying] = useState(false)
+  useDocumentTitle('Connexion')
 
   if (!loading && firebaseUser && appUser) {
     return <Navigate to={getHomeRoute(appUser.role)} replace />

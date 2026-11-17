@@ -2,6 +2,13 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { can, type Action, type Resource } from '@/core/rbac/permissions'
 import { FullPageLoader, ErrorState } from './States'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
+
+/** Écran d'erreur qui donne aussi son titre à l'onglet. */
+function TitledErrorState(props: React.ComponentProps<typeof ErrorState> & { title: string }) {
+  useDocumentTitle(props.title)
+  return <ErrorState {...props} />
+}
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -18,7 +25,7 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
   if (error || !appUser) {
     return (
       <div className="flex h-screen items-center justify-center bg-base-200 p-6">
-        <ErrorState
+        <TitledErrorState
           title="Accès impossible"
           description={error ?? 'Profil utilisateur introuvable.'}
           onRetry={() => refreshClaims()}
@@ -31,7 +38,7 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
   if (appUser.role !== 'super_admin_plateforme' && !appUser.universityId) {
     return (
       <div className="flex h-screen items-center justify-center bg-base-200 p-6">
-        <ErrorState
+        <TitledErrorState
           title="Compte non rattaché"
           description="Ce compte n'est rattaché à aucune université. Contactez votre administrateur."
         />
@@ -45,7 +52,7 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
   ) {
     return (
       <div className="flex h-full items-center justify-center p-6">
-        <ErrorState
+        <TitledErrorState
           title="Accès refusé"
           description="Vous n'avez pas la permission d'accéder à cette section."
         />

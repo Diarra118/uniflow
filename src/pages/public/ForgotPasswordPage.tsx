@@ -4,6 +4,7 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { z } from 'zod'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { BrandMark } from '@/shared/components/BrandMark'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 const schema = z.object({ email: z.string().email('Adresse email invalide') })
 
@@ -13,6 +14,7 @@ export function ForgotPasswordPage() {
   const [fieldError, setFieldError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
+  useDocumentTitle('Mot de passe oublié')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

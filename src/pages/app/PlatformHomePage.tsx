@@ -1,9 +1,11 @@
 import { Building2 } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { EmptyState } from '@/shared/components/States'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 export function PlatformHomePage() {
   const { appUser } = useAuth()
+  useDocumentTitle('Espace plateforme')
   if (!appUser) return null
 
   return (

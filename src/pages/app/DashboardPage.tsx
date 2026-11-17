@@ -1,9 +1,11 @@
 import { useAuth } from '@/core/firebase/AuthContext'
 import { ROLE_LABELS } from '@/shared/config/roleLabels'
 import { Sparkles } from 'lucide-react'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 export function DashboardPage() {
   const { appUser, university } = useAuth()
+  useDocumentTitle('Tableau de bord')
   if (!appUser) return null
 
   return (
