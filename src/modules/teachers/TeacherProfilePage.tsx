@@ -9,7 +9,8 @@ import { updateTeacher, setTeacherAccountStatus } from './api'
 import { TeacherFormModal } from './TeacherFormModal'
 import type { TeacherFormValues } from './schema'
 import { LoginAccessCard } from '@/modules/accounts/LoginAccessCard'
-import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
+import { StatusBadge } from '@/shared/components/StatusBadge'
+import { activeTone } from '@/shared/utils/statusTone'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 export function TeacherProfilePage() {

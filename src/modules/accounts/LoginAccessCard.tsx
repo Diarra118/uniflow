@@ -2,7 +2,8 @@ import { KeyRound, Send } from 'lucide-react'
 import type { LoginAccessRole } from '@/core/firebase/functions'
 import { useCreateLoginAccess, useResendAccountInvite } from './useCreateLoginAccess'
 import { AccountInvitationDialog } from './AccountInvitationDialog'
-import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
+import { StatusBadge } from '@/shared/components/StatusBadge'
+import { activeTone } from '@/shared/utils/statusTone'
 
 /** État du compte de connexion d'une fiche, création de l'accès et renvoi
  * de l'invitation. */

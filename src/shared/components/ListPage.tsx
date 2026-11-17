@@ -4,7 +4,7 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 /**
  * Gabarit commun des pages de liste : même conteneur, même alignement et
  * même en-tête partout. Sous-titre au format « N éléments — Université »
- * (voir listSubtitle).
+ * (voir listSubtitle dans utils/plural.ts).
  */
 export function ListPage({
   title,
@@ -32,7 +32,3 @@ export function ListPage({
   )
 }
 
-/** « 13 étudiants — Université Horizon ». `count` vient de countLabel. */
-export function listSubtitle(count: string, universityName?: string | null): string {
-  return universityName ? `${count} — ${universityName}` : count
-}

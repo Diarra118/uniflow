@@ -1,4 +1,4 @@
-import type { StatusTone } from '@/shared/components/StatusBadge'
+import type { StatusTone } from '@/shared/utils/statusTone'
 import { z } from 'zod'
 
 export const studentFormSchema = z.object({

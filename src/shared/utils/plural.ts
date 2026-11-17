@@ -8,3 +8,8 @@
 export function countLabel(n: number, singular: string, plural = `${singular}s`, more = false): string {
   return `${n}${more ? '+' : ''} ${n <= 1 ? singular : plural}`
 }
+
+/** « 13 étudiants — Université Horizon ». `count` vient de countLabel. */
+export function listSubtitle(count: string, universityName?: string | null): string {
+  return universityName ? `${count} — ${universityName}` : count
+}
