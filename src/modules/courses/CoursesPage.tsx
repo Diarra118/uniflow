@@ -159,6 +159,7 @@ export function CoursesPage() {
         course={editing}
         programs={programs}
         teachers={activeTeachers}
+        allTeachers={allTeachers ?? []}
         onClose={() => setFormOpen(false)}
         onSubmit={handleSubmit}
       />

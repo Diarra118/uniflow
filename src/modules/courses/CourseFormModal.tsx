@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
 import { courseFormSchema, type CourseFormValues } from './schema'
 import type { CourseUnit, Program, TeacherProfile } from '@/core/types'
@@ -10,13 +10,17 @@ export function CourseFormModal({
   course,
   programs,
   teachers,
+  allTeachers = [],
   onClose,
   onSubmit,
 }: {
   open: boolean
   course: CourseUnit | null
   programs: Program[]
+  /** Enseignants actifs : ceux qu'on peut attribuer. */
   teachers: TeacherProfile[]
+  /** Tous les enseignants : pour nommer l'enseignant actuel s'il est inactif. */
+  allTeachers?: TeacherProfile[]
   onClose: () => void
   onSubmit: (values: CourseFormValues) => Promise<void>
 }) {
@@ -24,6 +28,23 @@ export function CourseFormModal({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // L'enseignant actuel du cours reste proposé (et donc conservé si on ne
+  // change rien) même s'il est inactif ou si sa fiche n'existe plus.
+  const teacherOptions = useMemo(() => {
+    const options = teachers.map((t) => ({ id: t.id, label: `${t.lastName} ${t.firstName}` }))
+    const currentId = course?.teacherId
+    if (currentId && !teachers.some((t) => t.id === currentId)) {
+      const current = allTeachers.find((t) => t.id === currentId)
+      options.unshift({
+        id: currentId,
+        label: current
+          ? `${current.lastName} ${current.firstName} (inactif)`
+          : 'Enseignant actuel (fiche introuvable)',
+      })
+    }
+    return options
+  }, [teachers, allTeachers, course])
 
   useEffect(() => {
     if (!open) return
@@ -161,9 +182,9 @@ export function CourseFormModal({
               onChange={(e) => set('teacherId', e.target.value)}
             >
               <option value="">Non attribué</option>
-              {teachers.map((t) => (
+              {teacherOptions.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.lastName} {t.firstName}
+                  {t.label}
                 </option>
               ))}
             </select>

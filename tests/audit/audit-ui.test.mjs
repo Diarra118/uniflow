@@ -301,3 +301,30 @@ test('thème enregistré appliqué dès le chargement sur /login et /mot-de-pass
   await dark.close()
   writeFileSync(new URL('ui-theme-public.json', OUT), JSON.stringify(results, null, 1))
 })
+
+test("cours : enseignant inactif proposé « (inactif) » et conservé quand on modifie le nom", async () => {
+  const db = app.database()
+  await db.ref("universities/A/teachers/t2").set({ employeeNumber: "ENS-2", firstName: "Mariam", lastName: "Coulibaly", email: "mc@ui.test", accountStatus: "inactive", searchKey: "coulibaly mariam ens-2", createdAt: 1, updatedAt: 1 })
+  await db.ref("universities/A/courses/c-inactif").set({ name: "Réseaux", code: "INF202", programId: "p1", teacherId: "t2", credits: 4, createdAt: 1, updatedAt: 1 })
+  const { ctx, page } = await newPage("cours-enseignant-inactif")
+  await login(page, "admin")
+  await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
+  await page.goto(`${BASE}/app/courses`)
+  const row = page.getByRole("row", { name: /INF202/ })
+  await row.getByText("Coulibaly Mariam").waitFor({ timeout: 15000 })
+  await row.getByRole("button", { name: "Modifier" }).click()
+  await page.locator(".modal-box").waitFor()
+  // 2e liste déroulante du formulaire = Enseignant (la 1re = Filière).
+  const shown = await page.locator(".modal-box select").nth(1).evaluate((s) => ({
+    value: s.value, label: s.selectedOptions[0]?.textContent?.trim(),
+  }))
+  assert.equal(shown.value, "t2", "enseignant actuel sélectionné dans la liste")
+  assert.equal(shown.label, "Coulibaly Mariam (inactif)", "signalé « (inactif) »")
+  await page.locator(".modal-box input").first().fill("Réseaux informatiques avancés")
+  await page.getByRole("button", { name: "Enregistrer" }).click()
+  await page.locator(".modal-box").waitFor({ state: "detached", timeout: 15000 })
+  const saved = (await db.ref("universities/A/courses/c-inactif").get()).val()
+  assert.equal(saved.name, "Réseaux informatiques avancés", "nom modifié")
+  assert.equal(saved.teacherId, "t2", "enseignant conservé")
+  await ctx.close()
+})
