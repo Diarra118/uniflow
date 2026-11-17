@@ -96,15 +96,17 @@ export function useTeacher(universityId: string | null, teacherId: string | unde
   )
 }
 
-/** Liste complète des enseignants actifs — pour les listes déroulantes
- * d'association (ex : cours → enseignant). Volume attendu modeste par
- * tenant, chargement complet trié par nom sans pagination. */
-export function useActiveTeachersList(universityId: string | null) {
-  const [teachers, setTeachers] = useState<TeacherProfile[]>([])
+/** Liste complète des enseignants (actifs et inactifs), triée par nom —
+ * pour afficher l'enseignant d'un cours et alimenter les listes
+ * déroulantes (filtrer alors sur accountStatus === 'active'). Volume
+ * attendu modeste par université, chargement complet sans pagination.
+ * null tant que le premier chargement n'est pas arrivé (ou sans université). */
+export function useTeachersList(universityId: string | null) {
+  const [teachers, setTeachers] = useState<TeacherProfile[] | null>(null)
 
   useEffect(() => {
     if (!universityId) {
-      setTeachers([])
+      setTeachers(null)
       return
     }
     const baseRef = ref(rtdb, tenantCollectionPath(universityId, 'teachers'))
@@ -114,7 +116,7 @@ export function useActiveTeachersList(universityId: string | null) {
       snap.forEach((child) => {
         rows.push({ id: child.key as string, ...child.val() })
       })
-      setTeachers(rows.filter((t) => t.accountStatus === 'active'))
+      setTeachers(rows)
     })
     return unsubscribe
   }, [universityId])

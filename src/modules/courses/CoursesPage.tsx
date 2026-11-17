@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { BookOpen, Plus, Pencil } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
@@ -6,7 +6,7 @@ import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/State
 import { ListPage, listSubtitle } from '@/shared/components/ListPage'
 import { countLabel } from '@/shared/utils/plural'
 import { usePrograms } from '@/modules/programs/usePrograms'
-import { useActiveTeachersList } from '@/modules/teachers/useTeachers'
+import { useTeachersList } from '@/modules/teachers/useTeachers'
 import { useCourses } from './useCourses'
 import { createCourse, updateCourse } from './api'
 import { CourseFormModal } from './CourseFormModal'
@@ -20,19 +20,36 @@ export function CoursesPage() {
   const canCreate = useCan('courses', 'create')
   const canUpdate = useCan('courses', 'update')
 
+  // Un étudiant ne peut pas lire les enseignants (règles) : pas de colonne
+  // Enseignant pour lui, et aucune lecture refusée.
+  const canReadTeachers = useCan('teachers', 'read')
+
   const { courses, loading, error } = useCourses(universityId)
   const { programs } = usePrograms(universityId)
-  const teachers = useActiveTeachersList(universityId)
+  const allTeachers = useTeachersList(canReadTeachers ? universityId : null)
+  const activeTeachers = useMemo(
+    () => (allTeachers ?? []).filter((t) => t.accountStatus === 'active'),
+    [allTeachers]
+  )
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CourseUnit | null>(null)
 
   const programName = (programId: string) =>
     programs.find((p) => p.id === programId)?.name ?? '—'
-  const teacherName = (teacherId?: string) => {
-    if (!teacherId) return '—'
-    const t = teachers.find((t) => t.id === teacherId)
-    return t ? `${t.lastName} ${t.firstName}` : '—'
+  const teacherCell = (teacherId?: string) => {
+    if (!teacherId) return <span className="text-base-content/65">Non attribué</span>
+    if (!allTeachers) return null // chargement
+    const t = allTeachers.find((t) => t.id === teacherId)
+    if (!t) return <span className="text-base-content/65">Enseignant introuvable</span>
+    if (t.accountStatus !== 'active') {
+      return (
+        <>
+          {t.lastName} {t.firstName} <span className="text-base-content/65">(inactif)</span>
+        </>
+      )
+    }
+    return `${t.lastName} ${t.firstName}`
   }
 
   async function handleSubmit(values: CourseFormValues) {
@@ -101,7 +118,7 @@ export function CoursesPage() {
                 <th>Code</th>
                 <th>Nom</th>
                 <th>Filière</th>
-                <th>Enseignant</th>
+                {canReadTeachers && <th>Enseignant</th>}
                 <th>Crédits</th>
                 {canUpdate && <th className="text-right">Actions</th>}
               </tr>
@@ -112,7 +129,9 @@ export function CoursesPage() {
                   <td className="font-mono-data text-xs">{c.code}</td>
                   <td>{c.name}</td>
                   <td className="text-base-content/70">{programName(c.programId)}</td>
-                  <td className="text-base-content/70">{teacherName(c.teacherId)}</td>
+                  {canReadTeachers && (
+                    <td className="text-base-content/70">{teacherCell(c.teacherId)}</td>
+                  )}
                   <td className="text-base-content/70">{c.credits ?? '—'}</td>
                   {canUpdate && (
                     <td className="text-right">
@@ -139,7 +158,7 @@ export function CoursesPage() {
         open={formOpen}
         course={editing}
         programs={programs}
-        teachers={teachers}
+        teachers={activeTeachers}
         onClose={() => setFormOpen(false)}
         onSubmit={handleSubmit}
       />

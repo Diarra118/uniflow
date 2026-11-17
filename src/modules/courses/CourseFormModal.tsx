@@ -160,7 +160,7 @@ export function CourseFormModal({
               value={values.teacherId}
               onChange={(e) => set('teacherId', e.target.value)}
             >
-              <option value="">Non assigné</option>
+              <option value="">Non attribué</option>
               {teachers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.lastName} {t.firstName}
