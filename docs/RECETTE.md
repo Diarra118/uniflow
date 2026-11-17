@@ -3,6 +3,17 @@
 Procédure **préparée, non exécutée**. Elle cible un projet Firebase de
 recette distinct de la production. Aucune valeur secrète ne figure ici.
 
+> **État au 17/11/2026 : recette en ligne non réalisée, reste à faire.**
+> Elle exige le **plan Blaze** (paiement à l'usage, § 2) : Cloud Functions
+> de 2ᵉ génération et appels sortants pour les invitations. Le projet n'a
+> pas ce plan aujourd'hui. En attendant, la démonstration se fait en local
+> sur émulateurs (`npm run demo`, README « Lancer la démo »), où le
+> déclencheur `onUserProfileWritten` s'exécute aussi (région `us-central1`
+> sous l'émulateur uniquement). Les tests R0 à R7 (§ 6) restent à passer
+> sur un vrai projet : région `europe-west1`, runtime Node 22, App Check,
+> e-mails réels et révocation effective des refresh tokens (que l'émulateur
+> Auth ne contrôle pas).
+
 > ⚠️ `.firebaserc` désigne le projet de **production** comme projet par
 > défaut. Toutes les commandes ci-dessous passent donc **explicitement**
 > `--project <ID_RECETTE>`. N'exécutez jamais `firebase deploy` sans cette

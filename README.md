@@ -44,6 +44,56 @@ pas de Supabase, pas de base SQL.
   autres rôles → `/app`.
 - Interface entièrement en français.
 
+## Lancer la démo
+
+Démo complète sur les **émulateurs Firebase** de votre poste (projet fictif
+`demo-uniflow`) : aucun projet Firebase réel, aucun plan payant, aucune
+clé à renseigner.
+
+**Prérequis** : Node 22, Java 17+ (trouvé automatiquement, voir
+`scripts/with-java.mjs`), firebase-tools (`npm install -g firebase-tools`).
+
+```bash
+npm install && npm --prefix functions install   # une seule fois
+npm run demo
+```
+
+- Application : http://localhost:5173. Interface des émulateurs :
+  http://127.0.0.1:4000.
+- **Comptes et mots de passe** : `docs/COMPTES-DEMO.local.md`, écrit au
+  premier lancement (fichier local non versionné, mots de passe valables
+  dans les émulateurs uniquement, jamais affichés dans le terminal).
+- **Arrêt : Ctrl+C**. Les émulateurs sauvegardent leurs données dans
+  `.demo-data/` (non versionné) ; le lancement suivant les réimporte : les
+  fiches créées et les accès ouverts pendant la démo sont conservés.
+- `npm run demo:reset` efface les données sauvegardées et recrée le jeu de
+  démo (nouveaux mots de passe). Supprimer seulement
+  `docs/COMPTES-DEMO.local.md` régénère les mots de passe en conservant les
+  données.
+
+**Contenu** : deux universités fictives (Université Horizon, Institut
+supérieur Baobab), chacune avec son administrateur, des enseignants, des
+étudiants, des filières, des cours et des classes, plus un parent lié à un
+enfant. 9 comptes de connexion couvrent les rôles admin, enseignant,
+étudiant et parent. Le déclencheur `onUserProfileWritten` est actif : la
+suspension d'un profil dans l'interface des émulateurs déconnecte
+immédiatement l'utilisateur concerné.
+
+**Ce que fait `npm run demo`** : compile les fonctions, démarre les
+émulateurs Auth, Database et Functions (`--import` et `--export-on-exit`
+sur `.demo-data`), charge `database.rules.json`, importe le jeu de démo s'il
+n'existe pas encore (`functions/scripts/seedDemo.ts`), puis lance le front
+en mode émulateurs.
+
+**Sans internet** : la démo fonctionne hors ligne, après un premier
+lancement en ligne qui met en cache les émulateurs. Seules les polices
+Google manquent (polices système à la place). Détails :
+[docs/DEMO-HORS-LIGNE.md](docs/DEMO-HORS-LIGNE.md).
+
+Les ports 5173, 4000, 4400, 4500, 5001, 9000 et 9099 doivent être libres.
+Les suites de tests utilisent leurs propres émulateurs : arrêtez la démo
+avant de les lancer.
+
 ## Démarrage local
 
 ```bash
