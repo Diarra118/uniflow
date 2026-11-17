@@ -35,3 +35,8 @@ rules/node_modules
 
 # Sorties des tests d'audit (matrice RBAC, captures)
 tests/audit/out
+
+# Démo locale (npm run demo) : données des émulateurs sauvegardées (dont les
+# comptes Auth) et fichier des comptes de démo. Jamais versionnés.
+.demo-data/
+*.local.md

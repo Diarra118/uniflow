@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "demo": "node scripts/demo.mjs",
+    "demo:reset": "node scripts/demo.mjs --reset",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
