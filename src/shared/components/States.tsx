@@ -82,6 +82,18 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
   )
 }
 
+/** Indicateur discret dans la zone de contenu (la barre latérale et la
+ * barre du haut restent affichées). */
+export function ContentLoader({ label = 'Chargement…' }: { label?: string }) {
+  return (
+    <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-base-content/70">
+      <span className="loading loading-spinner loading-sm text-primary" />
+      {label}
+    </div>
+  )
+}
+
+/** Chargement avant l'affichage de l'application (authentification). */
 export function FullPageLoader() {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-base-200">

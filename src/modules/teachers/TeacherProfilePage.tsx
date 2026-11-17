@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Pencil, Users, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
-import { EmptyState, ErrorState, FullPageLoader } from '@/shared/components/States'
+import { ContentLoader, EmptyState, ErrorState } from '@/shared/components/States'
 import { useTeacher } from './useTeachers'
 import { updateTeacher, setTeacherAccountStatus } from './api'
 import { TeacherFormModal } from './TeacherFormModal'
@@ -25,7 +25,7 @@ export function TeacherProfilePage() {
   const [toggling, setToggling] = useState(false)
   useDocumentTitle('Fiche enseignant')
 
-  if (loading) return <FullPageLoader />
+  if (loading) return <ContentLoader label="Chargement de la fiche…" />
   if (error) return <ErrorState description={error} />
   if (!teacher) {
     return (

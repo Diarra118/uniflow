@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Pencil, GraduationCap, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
-import { EmptyState, ErrorState, FullPageLoader } from '@/shared/components/States'
+import { ContentLoader, EmptyState, ErrorState } from '@/shared/components/States'
 import { useStudent } from './useStudents'
 import { updateStudent, setStudentAccountStatus } from './api'
 import { StudentFormModal } from './StudentFormModal'
@@ -36,7 +36,7 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
   const [togglingStatus, setTogglingStatus] = useState(false)
   useDocumentTitle(isOwnRecord ? 'Mon dossier' : 'Fiche étudiant')
 
-  if (loading) return <FullPageLoader />
+  if (loading) return <ContentLoader label="Chargement de la fiche…" />
   if (error) return <ErrorState description={error} />
   if (!student) {
     return (
