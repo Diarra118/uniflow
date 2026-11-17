@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { GraduationCap, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Mail, Lock, ArrowRight } from 'lucide-react'
 import { z } from 'zod'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
+import { BrandMark } from '@/shared/components/BrandMark'
 
 const loginSchema = z.object({
   email: z.string().email('Adresse email invalide'),
@@ -88,58 +89,55 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-secondary p-10 text-secondary-content lg:flex">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-content">
-            <GraduationCap size={20} />
-          </div>
-          <span className="font-display text-lg font-semibold">SaaS de Gestion Universitaire</span>
-        </div>
+      <div className="brand-panel relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
+        <p className="text-sm font-medium tracking-wide opacity-80">
+          Plateforme de gestion universitaire
+        </p>
 
         <div>
           <p className="font-display max-w-md text-3xl font-medium leading-snug">
             Un registre unique, piloté par l'IA, pour accompagner chaque
             établissement du premier semestre au diplôme.
           </p>
-          <div className="mt-8 space-y-2 opacity-70">
+          <div className="mt-8 space-y-2">
             {['Étudiants & inscriptions', 'Notes & examens', 'Paiements & documents'].map(
               (line, i) => (
                 <div key={line} className="flex items-center gap-3 text-sm">
-                  <span className="font-mono-data w-6 text-primary/80">
+                  <span className="brand-panel-accent font-mono-data w-6">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className="h-px flex-1 bg-secondary-content/15" />
-                  <span>{line}</span>
+                  <span className="h-px flex-1 bg-current opacity-20" />
+                  <span className="opacity-85">{line}</span>
                 </div>
               )
             )}
           </div>
         </div>
 
-        <p className="text-xs opacity-50">© {new Date().getFullYear()} — Tous droits réservés</p>
+        <p className="text-xs opacity-75">
+          © {new Date().getFullYear()} UniFlow — Tous droits réservés
+        </p>
       </div>
 
       <div className="flex items-center justify-center bg-base-100 p-6">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-content">
-              <GraduationCap size={20} />
-            </div>
-            <span className="font-display text-lg font-semibold">Gestion Universitaire</span>
-          </div>
+          <BrandMark className="mb-8" />
 
           <h1 className="font-display text-2xl font-semibold">Connexion</h1>
-          <p className="mt-1 text-sm text-base-content/60">
+          <p className="mt-1 text-sm text-base-content/70">
             Accédez à l'espace de votre université.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
-              <label className="label" htmlFor="email">
-                <span className="label-text text-xs">Email</span>
+              <label
+                className="mb-1.5 block text-xs font-medium text-base-content/80"
+                htmlFor="email"
+              >
+                Email
               </label>
-              <label className="input input-bordered flex items-center gap-2">
-                <Mail size={16} className="text-base-content/40" />
+              <label className="input input-bordered flex w-full items-center gap-2">
+                <Mail size={16} className="text-base-content/50" />
                 <input
                   id="email"
                   type="email"
@@ -154,16 +152,19 @@ export function LoginPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <label className="label" htmlFor="password">
-                  <span className="label-text text-xs">Mot de passe</span>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <label className="text-xs font-medium text-base-content/80" htmlFor="password">
+                  Mot de passe
                 </label>
-                <Link to="/mot-de-passe-oublie" className="text-xs text-primary hover:underline">
-                  Oublié ?
+                <Link
+                  to="/mot-de-passe-oublie"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Mot de passe oublié ?
                 </Link>
               </div>
-              <label className="input input-bordered flex items-center gap-2">
-                <Lock size={16} className="text-base-content/40" />
+              <label className="input input-bordered flex w-full items-center gap-2">
+                <Lock size={16} className="text-base-content/50" />
                 <input
                   id="password"
                   type="password"

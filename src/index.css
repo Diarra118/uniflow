@@ -141,3 +141,13 @@ body {
   --sb-border: color-mix(in oklab, var(--color-base-content) 22%, var(--color-base-100));
   --sb-dot: color-mix(in oklab, var(--color-base-content) 45%, var(--color-base-100));
 }
+
+/* Panneau de marque de la page de connexion : bleu nuit dans les deux
+   thèmes (en sombre, bg-secondary devenait un bleu-gris clair). */
+.brand-panel {
+  background: oklch(27% 0.05 265);
+  color: oklch(96% 0.01 265);
+}
+.brand-panel-accent {
+  color: oklch(80% 0.12 85);
+}

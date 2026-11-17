@@ -49,7 +49,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         <div className="min-w-0">
           <p className="font-display truncate text-[15px] font-semibold leading-tight">
-            {university?.name ?? 'UniversityFlow AI'}
+            {university?.name ?? 'UniFlow'}
           </p>
           <p className="truncate text-xs text-base-content/50">
             {appUser ? ROLE_LABELS[appUser.role] : 'Plateforme académique'}
