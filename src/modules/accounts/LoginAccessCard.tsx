@@ -2,6 +2,7 @@ import { KeyRound, Send } from 'lucide-react'
 import type { LoginAccessRole } from '@/core/firebase/functions'
 import { useCreateLoginAccess, useResendAccountInvite } from './useCreateLoginAccess'
 import { AccountInvitationDialog } from './AccountInvitationDialog'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 
 /** État du compte de connexion d'une fiche, création de l'accès et renvoi
  * de l'invitation. */
@@ -29,9 +30,7 @@ export function LoginAccessCard({
         <div>
           <p className="text-xs text-base-content/50">Accès de connexion</p>
           <div className="mt-1 flex items-center gap-2">
-            <span className={`badge badge-sm ${uid ? 'badge-success' : 'badge-ghost'}`}>
-              {uid ? 'Accès créé' : "Pas d'accès"}
-            </span>
+            <StatusBadge tone={activeTone(!!uid)}>{uid ? 'Accès créé' : "Pas d'accès"}</StatusBadge>
           </div>
           <p className="mt-1 text-xs text-base-content/50">
             {uid

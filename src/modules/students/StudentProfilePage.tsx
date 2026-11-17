@@ -7,7 +7,8 @@ import { EmptyState, ErrorState, FullPageLoader } from '@/shared/components/Stat
 import { useStudent } from './useStudents'
 import { updateStudent, setStudentAccountStatus } from './api'
 import { StudentFormModal } from './StudentFormModal'
-import { ENROLLMENT_STATUS_BADGE, ENROLLMENT_STATUS_LABELS, type StudentFormValues } from './schema'
+import { ENROLLMENT_STATUS_TONE, ENROLLMENT_STATUS_LABELS, type StudentFormValues } from './schema'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { usePrograms } from '@/modules/programs/usePrograms'
 import { useClasses } from '@/modules/classes/useClasses'
 import { LoginAccessCard } from '@/modules/accounts/LoginAccessCard'
@@ -88,14 +89,12 @@ export function StudentProfilePage({ studentId: ownStudentId }: { studentId?: st
             </h1>
             <p className="font-mono-data text-sm text-base-content/50">{student.studentNumber}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className={`badge badge-sm ${ENROLLMENT_STATUS_BADGE[student.enrollmentStatus]}`}>
+              <StatusBadge tone={ENROLLMENT_STATUS_TONE[student.enrollmentStatus]}>
                 {ENROLLMENT_STATUS_LABELS[student.enrollmentStatus]}
-              </span>
-              <span
-                className={`badge badge-sm ${student.accountStatus === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-              >
+              </StatusBadge>
+              <StatusBadge tone={activeTone(student.accountStatus === 'active')}>
                 Compte {student.accountStatus === 'active' ? 'actif' : 'inactif'}
-              </span>
+              </StatusBadge>
             </div>
           </div>
         </div>

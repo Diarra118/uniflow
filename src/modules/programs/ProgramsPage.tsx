@@ -3,6 +3,7 @@ import { Layers, Plus, Pencil, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { ListPage, listSubtitle } from '@/shared/components/ListPage'
 import { countLabel } from '@/shared/utils/plural'
 import { usePrograms } from './usePrograms'
@@ -112,11 +113,9 @@ export function ProgramsPage() {
                     {p.durationYears ? countLabel(p.durationYears, 'an') : '—'}
                   </td>
                   <td>
-                    <span
-                      className={`badge badge-sm ${p.status === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-                    >
+                    <StatusBadge tone={activeTone(p.status === 'active')}>
                       {p.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
+                    </StatusBadge>
                   </td>
                   {canUpdate && (
                     <td>

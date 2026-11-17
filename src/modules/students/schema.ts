@@ -1,3 +1,4 @@
+import type { StatusTone } from '@/shared/components/StatusBadge'
 import { z } from 'zod'
 
 export const studentFormSchema = z.object({
@@ -23,9 +24,11 @@ export const ENROLLMENT_STATUS_LABELS: Record<StudentFormValues['enrollmentStatu
   withdrawn: 'Retiré',
 }
 
-export const ENROLLMENT_STATUS_BADGE: Record<StudentFormValues['enrollmentStatus'], string> = {
-  enrolled: 'badge-success',
-  pending: 'badge-warning',
-  graduated: 'badge-info',
-  withdrawn: 'badge-neutral',
+/** Ton du badge (StatusBadge) : vert inscrit, orange en attente, bleu
+ * diplômé, gris retiré. */
+export const ENROLLMENT_STATUS_TONE: Record<StudentFormValues['enrollmentStatus'], StatusTone> = {
+  enrolled: 'success',
+  pending: 'warning',
+  graduated: 'info',
+  withdrawn: 'neutral',
 }

@@ -4,13 +4,14 @@ import { GraduationCap, Plus, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { ListPage, listSubtitle } from '@/shared/components/ListPage'
 import { countLabel } from '@/shared/utils/plural'
 import { useStudents } from './useStudents'
 import { createStudent } from './api'
 import { StudentFormModal } from './StudentFormModal'
 import {
-  ENROLLMENT_STATUS_BADGE,
+  ENROLLMENT_STATUS_TONE,
   ENROLLMENT_STATUS_LABELS,
   type StudentFormValues,
 } from './schema'
@@ -166,16 +167,14 @@ export function StudentsPage() {
                     </td>
                     <td className="text-base-content/70">{s.email}</td>
                     <td>
-                      <span className={`badge badge-sm ${ENROLLMENT_STATUS_BADGE[s.enrollmentStatus]}`}>
+                      <StatusBadge tone={ENROLLMENT_STATUS_TONE[s.enrollmentStatus]}>
                         {ENROLLMENT_STATUS_LABELS[s.enrollmentStatus]}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="text-right">
-                      <span
-                        className={`badge badge-sm ${s.accountStatus === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-                      >
+                      <StatusBadge tone={activeTone(s.accountStatus === 'active')}>
                         {s.accountStatus === 'active' ? 'Actif' : 'Inactif'}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="text-right">
                       <Link

@@ -4,6 +4,7 @@ import { Users, Plus, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { ListPage, listSubtitle } from '@/shared/components/ListPage'
 import { countLabel } from '@/shared/utils/plural'
 import { useTeachers } from './useTeachers'
@@ -137,11 +138,9 @@ export function TeachersPage() {
                     <td className="text-base-content/70">{t.email}</td>
                     <td className="text-base-content/70">{t.department || '—'}</td>
                     <td className="text-right">
-                      <span
-                        className={`badge badge-sm ${t.accountStatus === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-                      >
+                      <StatusBadge tone={activeTone(t.accountStatus === 'active')}>
                         {t.accountStatus === 'active' ? 'Actif' : 'Inactif'}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="text-right">
                       <Link

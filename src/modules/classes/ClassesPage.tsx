@@ -3,6 +3,7 @@ import { Rows3, Plus, Pencil, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 import { ListPage, listSubtitle } from '@/shared/components/ListPage'
 import { countLabel } from '@/shared/utils/plural'
 import { usePrograms } from '@/modules/programs/usePrograms'
@@ -122,11 +123,9 @@ export function ClassesPage() {
                   <td className="text-base-content/70">{c.level || '—'}</td>
                   <td className="text-base-content/70">{c.academicYearLabel || '—'}</td>
                   <td>
-                    <span
-                      className={`badge badge-sm ${c.status === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-                    >
+                    <StatusBadge tone={activeTone(c.status === 'active')}>
                       {c.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
+                    </StatusBadge>
                   </td>
                   {canUpdate && (
                     <td>

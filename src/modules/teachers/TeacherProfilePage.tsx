@@ -9,6 +9,7 @@ import { updateTeacher, setTeacherAccountStatus } from './api'
 import { TeacherFormModal } from './TeacherFormModal'
 import type { TeacherFormValues } from './schema'
 import { LoginAccessCard } from '@/modules/accounts/LoginAccessCard'
+import { StatusBadge, activeTone } from '@/shared/components/StatusBadge'
 
 export function TeacherProfilePage() {
   const { teacherId } = useParams<{ teacherId: string }>()
@@ -73,11 +74,9 @@ export function TeacherProfilePage() {
             </h1>
             <p className="font-mono-data text-sm text-base-content/50">{teacher.employeeNumber}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span
-                className={`badge badge-sm ${teacher.accountStatus === 'active' ? 'badge-outline badge-success' : 'badge-outline'}`}
-              >
+              <StatusBadge tone={activeTone(teacher.accountStatus === 'active')}>
                 Compte {teacher.accountStatus === 'active' ? 'actif' : 'inactif'}
-              </span>
+              </StatusBadge>
             </div>
           </div>
         </div>
