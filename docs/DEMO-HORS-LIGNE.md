@@ -35,6 +35,7 @@ l'émulateur Auth dans le terminal et sur
 | Élément | Effet hors ligne | Gravité |
 |---|---|---|
 | **Polices Google** (`index.html` : Spectral, Inter, JetBrains Mono sur `fonts.googleapis.com`) | Échec silencieux ; polices de secours du système (Georgia, system-ui, monospace). L'application reste lisible, l'apparence diffère un peu. | Faible (esthétique) |
+| **Icônes de l'interface des émulateurs** (Material Icons, Google Fonts) | Les icônes s'affichent sous forme de mots (« search », « refresh », « more_vert ») ; l'interface reste utilisable (comptes listés, base consultable). Composant de firebase-tools, hors du projet. | Faible (esthétique) |
 | **Premier lancement** : jar de l'émulateur Database et archive de l'interface des émulateurs, téléchargés dans `~/.cache/firebase/emulators` | Sans ce cache, les émulateurs ne démarrent pas. L'archive de l'interface (`ui-v1.15.0.zip`) n'a été téléchargée qu'au premier `npm run demo`. | **Bloquant si le cache est absent** : lancer la démo une fois en ligne sur le poste de démonstration |
 | **Installation** : `npm install`, `npm --prefix functions install`, Java 17+, firebase-tools | Prérequis à installer en ligne | Bloquant si absent |
 | CLI Firebase : détection des métadonnées Google Cloud (`169.254.169.254`, `metadata.google.internal`), `firebase.googleapis.com`, vérification de version de `firebase-functions` (`npm show` sur registry.npmjs.org) | Tentatives en échec, sans effet sur la démo | Aucune |
