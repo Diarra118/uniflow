@@ -15,6 +15,7 @@ import { TeacherProfilePage } from '@/modules/teachers/TeacherProfilePage'
 import { ProgramsPage } from '@/modules/programs/ProgramsPage'
 import { CoursesPage } from '@/modules/courses/CoursesPage'
 import { ClassesPage } from '@/modules/classes/ClassesPage'
+import { SignupRequestsPage } from '@/modules/signup/SignupRequestsPage'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { FullPageLoader } from '@/shared/components/States'
 
@@ -116,6 +117,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={{ resource: 'classes', action: 'read' }}>
                   <ClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="inscriptions"
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'signupRequests', action: 'read' }}>
+                  <SignupRequestsPage />
                 </ProtectedRoute>
               }
             />

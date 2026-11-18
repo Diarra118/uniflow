@@ -138,6 +138,10 @@ export function makeDeps(initial: Tree = {}, failAt: FailPoint[] = []) {
         claims.set(uid, c)
         ops.push(empty ? 'clearClaims' : 'setClaims')
       },
+      async revokeRefreshTokens(uid) {
+        if (!users.has(uid)) throw Object.assign(new Error('nf'), { code: 'auth/user-not-found' })
+        ops.push('revokeTokens')
+      },
       async deleteUser(uid) {
         fail('deleteUser')
         users.delete(uid)

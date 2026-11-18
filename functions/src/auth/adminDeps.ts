@@ -97,6 +97,7 @@ export function adminDeps(): AccountDeps {
         }
       },
       setCustomUserClaims: (uid, claims) => auth.setCustomUserClaims(uid, claims),
+      revokeRefreshTokens: (uid) => auth.revokeRefreshTokens(uid),
       deleteUser: (uid) => auth.deleteUser(uid),
     },
     invitations: { sendPasswordSetupEmail },

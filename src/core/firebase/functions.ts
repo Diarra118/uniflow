@@ -94,3 +94,33 @@ export async function submitSignupRequest(input: SubmitSignupRequestInput) {
   const res = await submitSignupRequestCallable(input)
   return res.data
 }
+
+/** Validation d'une demande d'inscription par l'admin de l'université :
+ * l'université vient toujours des claims de l'admin. */
+export interface ApproveSignupRequestInput {
+  uid: string
+  /** Matricule attribué (étudiant ou employé). */
+  number: string
+  department?: string
+}
+
+const approveSignupRequestCallable = httpsCallable<
+  ApproveSignupRequestInput,
+  { uid: string; linkedRecordId: string }
+>(functions, 'approveSignupRequest')
+
+export async function approveSignupRequest(input: ApproveSignupRequestInput) {
+  const res = await approveSignupRequestCallable(input)
+  return res.data
+}
+
+const rejectSignupRequestCallable = httpsCallable<{ uid: string; reason?: string }, { uid: string }>(
+  functions,
+  'rejectSignupRequest'
+)
+
+/** Refus : la demande est marquée refusée et le compte désactivé. */
+export async function rejectSignupRequest(input: { uid: string; reason?: string }) {
+  const res = await rejectSignupRequestCallable(input)
+  return res.data
+}

@@ -10,10 +10,12 @@ import {
   CreditCard,
   Video,
   Building2,
+  UserPlus,
 } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { ROLE_LABELS } from '@/shared/config/roleLabels'
+import { usePendingSignupCount } from '@/modules/signup/useSignupRequests'
 
 // Aperçu visuel de la feuille de route — aucun lien, aucune donnée : ces
 // modules seront implémentés phase par phase (voir architecture §10).
@@ -33,6 +35,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const canReadPrograms = useCan('programs', 'read')
   const canReadCourses = useCan('courses', 'read')
   const canReadClasses = useCan('classes', 'read')
+  const canReadSignupRequests = useCan('signupRequests', 'read')
+  const pendingSignups = usePendingSignupCount(
+    canReadSignupRequests ? (appUser?.universityId ?? null) : null
+  )
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors ${
@@ -103,6 +109,20 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink to="/app/classes" onClick={onNavigate} className={linkClass}>
                 <Rows3 size={17} strokeWidth={2} />
                 Classes
+              </NavLink>
+            )}
+            {canReadSignupRequests && (
+              <NavLink to="/app/inscriptions" onClick={onNavigate} className={linkClass}>
+                <UserPlus size={17} strokeWidth={2} />
+                Inscriptions
+                {!!pendingSignups && (
+                  <span
+                    className="status-badge status-badge-warning ml-auto"
+                    aria-label={`${pendingSignups} en attente`}
+                  >
+                    {pendingSignups}
+                  </span>
+                )}
               </NavLink>
             )}
           </>

@@ -24,6 +24,7 @@ export type Resource =
   | 'academicYears'
   | 'aiInsights'
   | 'platformUniversities' // métadonnées commerciales — jamais les données pédagogiques
+  | 'signupRequests' // demandes d'auto-inscription de l'université
 
 export type Action = 'read' | 'create' | 'update' | 'delete'
 
@@ -65,6 +66,9 @@ export const PERMISSIONS: PermissionMatrix = {
     notifications: ALL,
     academicYears: ALL,
     aiInsights: RO,
+    // Lecture seule : valider ou refuser passe par les fonctions serveur
+    // approveSignupRequest / rejectSignupRequest (règles : .write false).
+    signupRequests: RO,
   },
   // Enseignant : les écritures sur grades, exams et elearning sont limitées
   // par les Security Rules aux cours dont il est responsable

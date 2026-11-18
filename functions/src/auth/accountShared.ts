@@ -41,6 +41,7 @@ export interface AccountDeps {
     /** Compte Auth tel qu'il est maintenant (null s'il n'existe pas). */
     getUser(uid: string): Promise<AuthUserInfo | null>
     setCustomUserClaims(uid: string, claims: Record<string, unknown>): Promise<void>
+    revokeRefreshTokens(uid: string): Promise<void>
     deleteUser(uid: string): Promise<void>
   }
   invitations: {
@@ -282,4 +283,20 @@ export async function safely(
   } catch (err) {
     deps.logger.error(`Rollback incomplet : ${label}`, { uid, code: errorCode(err) })
   }
+}
+
+/**
+ * Dernière étape commune à createUserAccount et approveSignupRequest : le
+ * profil (déjà écrit en « pending » et lié à sa fiche) passe actif, puis
+ * les claims sont posés EN DERNIER — aucun droit n'existe tant que tout le
+ * reste n'a pas réussi.
+ */
+export async function activateAccount(
+  deps: AccountDeps,
+  uid: string,
+  role: LinkedRecordType,
+  universityId: string
+) {
+  await deps.db.update(`users/${uid}`, { status: 'active' })
+  await deps.auth.setCustomUserClaims(uid, { role, universityId })
 }

@@ -42,6 +42,7 @@ export type TenantSubcollection =
   | 'notifications'
   | 'academicYears'
   | 'aiInsights'
+  | 'signupRequests'
 
 export function tenantCollectionPath(universityId: string, sub: TenantSubcollection) {
   if (!universityId) {

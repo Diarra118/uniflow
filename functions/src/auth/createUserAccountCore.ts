@@ -13,6 +13,7 @@ import {
   readRecordEmail,
   readRecordName,
   recordPath,
+  activateAccount,
   releaseQuota,
   reserveQuota,
   safely,
@@ -172,8 +173,7 @@ export async function createUserAccountCore(
 
     // 3. Activation du profil, puis claims EN DERNIER : aucun droit
     //    n'existe tant que tout le reste n'a pas réussi.
-    await deps.db.update(`users/${uid}`, { status: 'active' })
-    await deps.auth.setCustomUserClaims(uid, { role: input.role, universityId })
+    await activateAccount(deps, uid, input.role, universityId)
   } catch (err) {
     await rollback(deps, uid, `${path}/uid`)
     await safely(deps, 'release quota', uid, () => releaseQuota(deps, quotaPath))
