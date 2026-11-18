@@ -138,7 +138,8 @@ test('connexion admin, persistance après rechargement et nouvel onglet, thème,
   await login(page, 'admin')
   await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
   await page.getByText('Audit admin').first().waitFor()
-  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Tableau de bord', 'Étudiants'].sort())
+  // « Inscriptions » : demandes d'auto-inscription (admin d'université seulement).
+  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Inscriptions', 'Tableau de bord', 'Étudiants'].sort())
   await checkFrench(page, 'dashboard admin')
 
   // Persistance de session.

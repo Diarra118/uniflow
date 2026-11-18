@@ -170,7 +170,8 @@ npm run dev
 - Tests sur émulateurs : `npm run test:rules`, `npm run test:integration`,
   `npm run test:audit`, `npm run test:revocation` (mesure de la révocation
   d'un rôle), `npm run test:session` (déconnexion ou bascule de rôle d'un
-  utilisateur connecté), `npm run test:e2e` (parcours complet dans Edge :
+  utilisateur connecté), `npm run test:signup` (auto-inscription : demande,
+  écran d'attente, validation et refus par l'admin), `npm run test:e2e` (parcours complet dans Edge :
   l'admin crée un enseignant et un étudiant, chacun se connecte). Sur la page
   d'action de l'émulateur, le nouveau mot de passe se passe dans l'URL
   (`&newPassword=…`) : il n'y a pas de formulaire en local.

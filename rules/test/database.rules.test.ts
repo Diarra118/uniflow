@@ -42,6 +42,9 @@ const IDS: Record<string, { uid: string; claims?: Claims }> = {
   // Token avec un universityId mais sans rôle (ex : compte orphelin).
   noRoleA: { uid: 'noRoleA', claims: { universityId: 'A' } },
   weirdRoleA: { uid: 'weirdRoleA', claims: { role: 'hacker', universityId: 'A' } },
+  // Auto-inscription : comptes créés par la personne elle-même, SANS claims.
+  requester1: { uid: 'requester1' },
+  requester2: { uid: 'requester2' },
 }
 
 type Who = keyof typeof IDS | 'anon'
@@ -89,9 +92,17 @@ const SEED = {
     adminB: { uid: 'adminB', role: 'admin_universite', universityId: 'B', status: 'active' },
     parentB: { uid: 'parentB', role: 'parent', universityId: 'B', status: 'active' },
   },
+  // État des demandes, écrit par les fonctions : lisible par son titulaire.
+  signupStatus: {
+    requester1: { universityId: 'A', universityName: 'A', requestedRole: 'student', status: 'pending', createdAt: 1 },
+    requester2: { universityId: 'B', universityName: 'B', requestedRole: 'teacher', status: 'pending', createdAt: 1 },
+  },
   universities: {
     A: {
       meta: { name: 'A', plan: 'standard', status: 'active' },
+      signupRequests: {
+        requester1: { uid: 'requester1', email: 'r1@a.edu', firstName: 'Rita', lastName: 'Un', requestedRole: 'student', status: 'pending', createdAt: 1 },
+      },
       parentLinks: {
         parentA: { studentA: { authorized: true }, studentA2: { authorized: false } },
         parentA2: { studentA2: { authorized: true } },
@@ -140,6 +151,9 @@ const SEED = {
     },
     B: {
       meta: { name: 'B', plan: 'standard', status: 'active' },
+      signupRequests: {
+        requester2: { uid: 'requester2', email: 'r2@b.edu', firstName: 'Remi', lastName: 'Deux', requestedRole: 'teacher', status: 'pending', createdAt: 1 },
+      },
       students: { sb1: { firstName: 'Autre', email: 'autre@b.edu' } },
       programs: { pb1: { name: 'Droit' } },
     },
@@ -633,5 +647,76 @@ describe('24. révocation immédiate (profil /users)', () => {
     await assertSucceeds(read('teacherA', `${A}/students`))
     await assertSucceeds(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', { studentId: 'studentA' })))
     await assertFails(read('teacherA', `${A}/payments/pay1`))
+  })
+})
+
+describe('25. auto-inscription (demandes d’inscription)', () => {
+  const B = 'universities/B'
+  const request = { uid: 'requester1', email: 'r1@a.edu', firstName: 'Rita', lastName: 'Un', requestedRole: 'student', status: 'pending', createdAt: 1 }
+
+  test('le demandeur (sans claims) ne lit aucune donnée', async () => {
+    for (const path of [
+      `${A}/students`, `${A}/students/s1`, `${A}/teachers`, `${A}/programs`, `${A}/courses`,
+      `${A}/classes`, `${A}/meta`, `${A}/signupRequests`, `${A}/signupRequests/requester1`,
+      `${B}/signupRequests`, 'platform/universitiesIndex', 'users/adminA', 'signupStatus/requester2',
+    ]) {
+      await assertFails(read('requester1', path))
+    }
+  })
+
+  test('il lit le statut de SA demande, personne d’autre ne le lit', async () => {
+    const snap = await assertSucceeds(read('requester1', 'signupStatus/requester1'))
+    assert.equal(snap.val().status, 'pending')
+    await assertFails(read('requester2', 'signupStatus/requester1'))
+    await assertFails(read('anon', 'signupStatus/requester1'))
+    await assertFails(read('adminA', 'signupStatus/requester1'))
+    await assertFails(read('requester1', 'signupStatus'))
+  })
+
+  test('il ne peut pas se valider lui-même', async () => {
+    await assertFails(write('requester1', 'users/requester1', { uid: 'requester1', role: 'student', universityId: 'A', status: 'active' }))
+    await assertFails(patch('requester1', 'signupStatus/requester1', { status: 'approved' }))
+    await assertFails(patch('requester1', `${A}/signupRequests/requester1`, { status: 'approved' }))
+    await assertFails(write('requester1', `${A}/students/moi`, { firstName: 'Rita', email: 'r1@a.edu', uid: 'requester1' }))
+  })
+
+  test('il ne peut ni modifier ni supprimer sa demande', async () => {
+    await assertFails(patch('requester1', `${A}/signupRequests/requester1`, { requestedRole: 'teacher' }))
+    await assertFails(write('requester1', `${A}/signupRequests/requester1`, { ...request, requestedRole: 'teacher' }))
+    await assertFails(del('requester1', `${A}/signupRequests/requester1`))
+    await assertFails(write('requester1', 'signupStatus/requester1', { universityId: 'A', status: 'pending' }))
+    await assertFails(del('requester1', 'signupStatus/requester1'))
+  })
+
+  test('il ne peut pas viser une autre université', async () => {
+    await assertFails(write('requester1', `${B}/signupRequests/requester1`, { ...request }))
+    await assertFails(patch('requester1', 'signupStatus/requester1', { universityId: 'B' }))
+    await assertFails(write('requester1', `${A}/signupRequests/autre`, { ...request, uid: 'autre' }))
+  })
+
+  test('l’admin A lit les demandes de A ; l’admin B ne voit pas celles de A', async () => {
+    await assertSucceeds(read('adminA', `${A}/signupRequests`))
+    await assertSucceeds(read('adminA', `${A}/signupRequests/requester1`))
+    await assertFails(read('adminB', `${A}/signupRequests`))
+    await assertFails(read('adminB', `${A}/signupRequests/requester1`))
+    await assertSucceeds(read('adminB', `${B}/signupRequests`))
+    await assertFails(read('adminA', `${B}/signupRequests`))
+  })
+
+  test('les autres rôles de A ne lisent pas les demandes', async () => {
+    for (const who of ['teacherA', 'studentA', 'parentA', 'superAdmin', 'noRoleA'] as const) {
+      await assertFails(read(who, `${A}/signupRequests`))
+    }
+  })
+
+  test('aucune écriture client des demandes, même par l’admin (fonctions seulement)', async () => {
+    await assertFails(patch('adminA', `${A}/signupRequests/requester1`, { status: 'approved' }))
+    await assertFails(del('adminA', `${A}/signupRequests/requester1`))
+    await assertFails(patch('adminA', 'signupStatus/requester1', { status: 'approved' }))
+  })
+
+  test('admin suspendu : plus de lecture des demandes', async () => {
+    await asAdminSdk((root) => root.ref('users/adminA/status').set('suspended'))
+    await assertFails(read('adminA', `${A}/signupRequests`))
   })
 })

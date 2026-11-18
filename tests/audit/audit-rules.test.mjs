@@ -66,6 +66,7 @@ function tenant(t) {
     },
     teachers: { [`t${s}1`]: { firstName: 'Moussa', email: `m@${s}.edu`, uid: `teacher${t}` } },
     programs: { p1: { name: 'Info' } },
+    signupRequests: { req1: { uid: 'req1', email: `req1@${s}.edu`, firstName: 'Rita', lastName: 'Un', requestedRole: 'student', status: 'pending', createdAt: 1 } },
     // c1 confié à la fiche enseignant t<x>1 (uid teacher<T>), c2 à personne.
     courses: { c1: { name: 'Algo', teacherId: `t${s}1` }, c2: { name: 'Sans responsable' } },
     classes: { k1: { name: 'L1' } },
@@ -327,6 +328,9 @@ const RES = {
   notifications: { item: 'notifications/n_ROLEUID', del: 'notifications/n_ROLEUID' },
   aiInsights: { item: 'aiInsights/a1', del: 'aiInsights/a1' },
   platformUniversities: { abs: true, list: 'platform/universitiesIndex', item: 'platform/universitiesIndex/A', del: 'platform/universitiesIndex/A' },
+  // Demandes d'auto-inscription : lecture par l'admin de l'université,
+  // aucune écriture client (décisions par les fonctions serveur).
+  signupRequests: { list: 'signupRequests', item: 'signupRequests/req1', del: 'signupRequests/req1' },
 }
 const matrix = []
 
