@@ -74,3 +74,23 @@ export async function listSignupUniversities() {
   const res = await listSignupUniversitiesCallable()
   return res.data.universities
 }
+
+/** Ce que le client transmet : université visée, rôle demandé et nom.
+ * L'e-mail est lu côté serveur dans le compte Auth ; aucun droit n'est
+ * accordé avant la validation par l'admin de l'université. */
+export interface SubmitSignupRequestInput {
+  universityId: string
+  requestedRole: 'student' | 'teacher'
+  firstName: string
+  lastName: string
+}
+
+const submitSignupRequestCallable = httpsCallable<SubmitSignupRequestInput, { status: 'pending' }>(
+  functions,
+  'submitSignupRequest'
+)
+
+export async function submitSignupRequest(input: SubmitSignupRequestInput) {
+  const res = await submitSignupRequestCallable(input)
+  return res.data
+}

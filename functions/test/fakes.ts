@@ -55,6 +55,7 @@ export interface FakeUser {
   password: string
   disabled: boolean
   displayName?: string
+  emailVerified?: boolean
 }
 
 /** Noms des opérations qu'on peut faire échouer. */
@@ -119,6 +120,16 @@ export function makeDeps(initial: Tree = {}, failAt: FailPoint[] = []) {
         if (!u) throw Object.assign(new Error('nf'), { code: 'auth/user-not-found' })
         u.disabled = props.disabled
         ops.push(props.disabled ? 'disableUser' : 'enableUser')
+      },
+      async getUser(uid) {
+        const u = users.get(uid)
+        if (!u) return null
+        return {
+          email: u.email,
+          emailVerified: u.emailVerified ?? false,
+          disabled: u.disabled,
+          customClaims: clone(claims.get(uid) ?? {}),
+        }
       },
       async setCustomUserClaims(uid, c) {
         const empty = Object.keys(c).length === 0

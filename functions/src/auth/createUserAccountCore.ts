@@ -15,6 +15,7 @@ import {
   recordPath,
   releaseQuota,
   reserveQuota,
+  safely,
   sendInvitation,
   usagePath,
   type AccountDeps,
@@ -198,19 +199,6 @@ export async function createUserAccountCore(
   })
 
   return { uid, invitationSent }
-}
-
-async function safely(
-  deps: AccountDeps,
-  label: string,
-  uid: string | undefined,
-  step: () => Promise<unknown>
-) {
-  try {
-    await step()
-  } catch (err) {
-    deps.logger.error(`Rollback incomplet : ${label}`, { uid, code: errorCode(err) })
-  }
 }
 
 /**

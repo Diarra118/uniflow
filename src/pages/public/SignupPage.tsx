@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
@@ -12,6 +12,7 @@ import {
   signupFormSchema,
   type SignupFormValues,
 } from '@/modules/signup/schema'
+import { registerAndRequestAccess } from '@/modules/signup/api'
 
 type FormState = Omit<SignupFormValues, 'requestedRole'> & { requestedRole: string }
 
@@ -51,6 +52,7 @@ export function SignupPage() {
   const [listError, setListError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     let cancelled = false
@@ -101,10 +103,11 @@ export function SignupPage() {
     }
   }
 
-  // Envoi de la demande : branché à l'étape suivante (création du compte +
-  // fonction serveur submitSignupRequest).
-  async function onValidSubmit(_data: SignupFormValues) {
-    throw new Error("L'envoi des demandes n'est pas encore disponible.")
+  // Compte Auth créé (sans rôle) puis demande enregistrée côté serveur ;
+  // l'espace /app affiche ensuite l'écran d'attente.
+  async function onValidSubmit(data: SignupFormValues) {
+    await registerAndRequestAccess(data)
+    navigate('/app', { replace: true })
   }
 
   const input = (key: keyof FormState) =>

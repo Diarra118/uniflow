@@ -8,6 +8,14 @@ import { HttpsError } from 'firebase-functions/v2/https'
  * dans adminDeps.ts), ce qui permet de tester toute la logique sans émulateur.
  */
 
+/** État d'un compte Firebase Auth lu côté serveur. */
+export interface AuthUserInfo {
+  email: string | null
+  emailVerified: boolean
+  disabled: boolean
+  customClaims: Record<string, unknown>
+}
+
 /** Sous-ensemble de request.auth utilisé (uid + claims du token vérifié). */
 export interface CallerAuth {
   uid: string
@@ -30,6 +38,8 @@ export interface AccountDeps {
       disabled: boolean
     }): Promise<{ uid: string }>
     updateUser(uid: string, props: { disabled: boolean }): Promise<void>
+    /** Compte Auth tel qu'il est maintenant (null s'il n'existe pas). */
+    getUser(uid: string): Promise<AuthUserInfo | null>
     setCustomUserClaims(uid: string, claims: Record<string, unknown>): Promise<void>
     deleteUser(uid: string): Promise<void>
   }
@@ -257,4 +267,19 @@ export async function releaseQuota(deps: AccountDeps, path: string) {
     // la vraie valeur si elle diffère.
     typeof current === 'number' && current > 0 ? current - 1 : (current ?? null)
   )
+}
+
+/** Étape de rollback : ne lève jamais, journalise l'échec (uid et code
+ * seulement). Partagée par createUserAccount et la revue des inscriptions. */
+export async function safely(
+  deps: AccountDeps,
+  label: string,
+  uid: string | undefined,
+  step: () => Promise<unknown>
+) {
+  try {
+    await step()
+  } catch (err) {
+    deps.logger.error(`Rollback incomplet : ${label}`, { uid, code: errorCode(err) })
+  }
 }

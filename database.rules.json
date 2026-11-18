@@ -10,6 +10,13 @@
       }
     },
 
+    "signupStatus": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+
     "universities": {
       "$universityId": {
 
@@ -129,6 +136,12 @@
             ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && (auth.token.role === 'admin_universite' || auth.token.role === 'teacher')",
             ".write": false
           }
+        },
+
+        "signupRequests": {
+          ".read": "auth != null && auth.token.universityId === $universityId && root.child('users').child(auth.uid).child('status').val() === 'active' && root.child('users').child(auth.uid).child('role').val() === auth.token.role && root.child('users').child(auth.uid).child('universityId').val() === auth.token.universityId && auth.token.role === 'admin_universite'",
+          ".write": false,
+          ".indexOn": ["status", "createdAt"]
         },
 
         "indexes": {

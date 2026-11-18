@@ -82,6 +82,20 @@ export function adminDeps(): AccountDeps {
       updateUser: async (uid, props) => {
         await auth.updateUser(uid, props)
       },
+      getUser: async (uid) => {
+        try {
+          const u = await auth.getUser(uid)
+          return {
+            email: u.email ?? null,
+            emailVerified: u.emailVerified,
+            disabled: u.disabled,
+            customClaims: u.customClaims ?? {},
+          }
+        } catch (err) {
+          if ((err as { code?: string }).code === 'auth/user-not-found') return null
+          throw err
+        }
+      },
       setCustomUserClaims: (uid, claims) => auth.setCustomUserClaims(uid, claims),
       deleteUser: (uid) => auth.deleteUser(uid),
     },
