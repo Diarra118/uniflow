@@ -17,8 +17,8 @@ import {
 } from 'firebase/auth'
 import { ref, onValue } from 'firebase/database'
 import { auth, rtdb } from './config'
-import { userPath, universityMetaPath } from './paths'
-import type { AppUser, Role, UniversityMeta } from '@/core/types'
+import { userPath, universityMetaPath, signupStatusPath } from './paths'
+import type { AppUser, Role, SignupRequestState, UniversityMeta } from '@/core/types'
 
 interface AuthContextValue {
   firebaseUser: FirebaseUser | null
@@ -29,6 +29,9 @@ interface AuthContextValue {
   /** Raison d'une déconnexion imposée (suspension, suppression, droits
    * modifiés), affichée sur la page de connexion. */
   signOutMessage: string | null
+  /** Demande d'inscription du compte connecté SANS rôle (auto-inscription) :
+   * en attente, validée (ouverture en cours) ou refusée ; null sinon. */
+  signupRequest: SignupRequestState | null
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -51,6 +54,10 @@ const SIGN_OUT_MESSAGES = {
  * juste APRÈS le profil). Au-delà : déconnexion. */
 const RIGHTS_REFRESH_DELAYS_MS = [0, 2000, 5000, 10000]
 
+/** Demande validée : renouvellement du token jusqu'à l'arrivée des claims
+ * (posés par approveSignupRequest juste après le statut). */
+const APPROVED_REFRESH_DELAYS_MS = [0, 1000, 2000, 4000, 8000]
+
 function readStoredSignOutReason(): string | null {
   try {
     return sessionStorage.getItem(SIGN_OUT_REASON_KEY)
@@ -67,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [signOutMessage, setSignOutMessage] = useState<string | null>(readStoredSignOutReason)
+  /** Connecté sans claims de rôle (compte en attente ou en cours d'activation). */
+  const [noRole, setNoRole] = useState(false)
+  const [signupRequest, setSignupRequest] = useState<SignupRequestState | null>(null)
   /** Boucle de renouvellement en cours (rôle/université attendus du profil). */
   const rightsLoop = useRef<{ key: string; cancelled: boolean } | null>(null)
 
@@ -98,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setClaims(null)
         setProfile(null)
         setUniversity(null)
+        setNoRole(false)
+        setSignupRequest(null)
         setLoading(false)
       }
     })
@@ -119,15 +131,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!role) {
           // Le compte vient d'être créé et la Cloud Function d'attribution
           // des claims n'a pas encore été traitée — état transitoire attendu.
+          // Le chargement se termine une fois la demande d'inscription
+          // éventuelle lue (effet ci-dessous) : pas d'écran d'erreur fugace.
           setClaims(null)
+          setNoRole(true)
           setError(
             "Votre compte est en cours d'activation. Réessayez dans quelques instants."
           )
-          setLoading(false)
           return
         }
 
         setError(null)
+        setNoRole(false)
+        setSignupRequest(null)
         setClaims({ role, universityId })
       } catch {
         setError('Impossible de vérifier vos autorisations.')
@@ -229,6 +245,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [firebaseUser, claims, forceSignOut, cancelRightsLoop])
 
+  // Demande d'inscription d'un compte sans rôle (signupStatus/{uid}, lisible
+  // par son seul titulaire, écrit uniquement par les fonctions serveur).
+  useEffect(() => {
+    if (!firebaseUser || !noRole) return
+    let cancelled = false
+    let refreshing = false
+    const unsubscribe = onValue(
+      ref(rtdb, signupStatusPath(firebaseUser.uid)),
+      (snap) => {
+        const data = snap.val() as SignupRequestState | null
+        setSignupRequest(data)
+        setLoading(false)
+        if (data?.status === 'approved' && !refreshing) {
+          // Validée : les claims arrivent juste après ; onIdTokenChanged prend
+          // le relais dès que le token renouvelé les contient.
+          refreshing = true
+          void (async () => {
+            for (const delay of APPROVED_REFRESH_DELAYS_MS) {
+              await new Promise((resolve) => window.setTimeout(resolve, delay))
+              if (cancelled || !auth.currentUser) return
+              try {
+                const res = await auth.currentUser.getIdTokenResult(true)
+                if (res.claims.role) return
+              } catch {
+                return
+              }
+            }
+            refreshing = false
+          })()
+        }
+      },
+      () => {
+        setSignupRequest(null)
+        setLoading(false)
+      }
+    )
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [firebaseUser, noRole])
+
   // Métadonnées de l'université (si rattaché à un tenant)
   useEffect(() => {
     if (!claims?.universityId) {
@@ -293,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         signOutMessage,
+        signupRequest,
         signIn,
         signOut,
         resetPassword,

@@ -45,7 +45,7 @@ function Field({ id, label, error, children }: { id: string; label: string; erro
  */
 export function SignupPage() {
   useDocumentTitle('Créer un compte')
-  const { firebaseUser, appUser, loading } = useAuth()
+  const { firebaseUser, appUser, loading, signupRequest } = useAuth()
   const [values, setValues] = useState<FormState>(EMPTY)
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [universities, setUniversities] = useState<SignupUniversity[] | null>(null)
@@ -74,6 +74,7 @@ export function SignupPage() {
   if (!loading && firebaseUser && appUser) {
     return <Navigate to={getHomeRoute(appUser.role)} replace />
   }
+  if (!loading && firebaseUser && signupRequest) return <Navigate to="/app" replace />
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setValues((v) => ({ ...v, [key]: value }))

@@ -26,7 +26,8 @@ const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
   'auth/network-request-failed': 'Impossible de joindre le serveur. Vérifiez votre connexion.',
   'auth/api-key-not-valid': INVALID_CONFIG,
   'auth/invalid-api-key': INVALID_CONFIG,
-  'auth/user-disabled': 'Ce compte a été désactivé. Contactez votre administrateur.',
+  'auth/user-disabled':
+    "Ce compte est désactivé (demande d'inscription refusée ou accès retiré). Contactez l'administration de votre université.",
 }
 
 function signInErrorMessage(err: unknown): string {
@@ -39,8 +40,17 @@ function signInErrorMessage(err: unknown): string {
 }
 
 export function LoginPage() {
-  const { firebaseUser, appUser, loading, error, signOutMessage, signIn, signOut, refreshClaims } =
-    useAuth()
+  const {
+    firebaseUser,
+    appUser,
+    loading,
+    error,
+    signOutMessage,
+    signupRequest,
+    signIn,
+    signOut,
+    refreshClaims,
+  } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fieldError, setFieldError] = useState<string | null>(null)
@@ -51,6 +61,10 @@ export function LoginPage() {
 
   if (!loading && firebaseUser && appUser) {
     return <Navigate to={getHomeRoute(appUser.role)} replace />
+  }
+  // Compte auto-inscrit : l'écran d'attente (ou de refus) est dans /app.
+  if (!loading && firebaseUser && !appUser && signupRequest) {
+    return <Navigate to="/app" replace />
   }
 
   // Connecté côté Auth mais compte inutilisable (claims pas encore posés,

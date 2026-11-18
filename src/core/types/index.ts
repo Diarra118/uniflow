@@ -148,3 +148,37 @@ export interface ClassGroup {
   createdAt: number
   updatedAt: number
 }
+
+// ---------------------------------------------------------------------
+// Auto-inscription (demande d'accès validée par l'admin de l'université)
+// ---------------------------------------------------------------------
+
+export type SignupRequestStatus = 'pending' | 'processing' | 'approved' | 'rejected'
+
+/** signupStatus/{uid} : ce que le demandeur voit de SA demande. */
+export interface SignupRequestState {
+  universityId: string
+  universityName: string
+  requestedRole: 'student' | 'teacher'
+  status: SignupRequestStatus
+  createdAt: number
+  decidedAt?: number
+  /** Motif du refus, saisi par l'admin (facultatif). */
+  reason?: string
+}
+
+/** universities/{u}/signupRequests/{uid} : la demande vue par l'admin. */
+export interface SignupRequest {
+  uid: string
+  email: string
+  emailVerified: boolean
+  firstName: string
+  lastName: string
+  requestedRole: 'student' | 'teacher'
+  status: SignupRequestStatus
+  createdAt: number
+  decidedAt?: number
+  decidedBy?: string
+  reason?: string
+  linkedRecordId?: string
+}

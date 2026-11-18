@@ -19,10 +19,11 @@ import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { FullPageLoader } from '@/shared/components/States'
 
 function RootRedirect() {
-  const { firebaseUser, appUser, loading } = useAuth()
+  const { firebaseUser, appUser, loading, signupRequest } = useAuth()
   if (loading) return <FullPageLoader />
   if (!firebaseUser) return <Navigate to="/login" replace />
   if (appUser) return <Navigate to={getHomeRoute(appUser.role)} replace />
+  if (signupRequest) return <Navigate to="/app" replace />
   return <FullPageLoader />
 }
 

@@ -3,6 +3,7 @@ import { useAuth } from '@/core/firebase/AuthContext'
 import { can, type Action, type Resource } from '@/core/rbac/permissions'
 import { FullPageLoader, ErrorState } from './States'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
+import { SignupPendingScreen } from '@/modules/signup/SignupPendingScreen'
 
 /** Écran d'erreur qui donne aussi son titre à l'onglet. */
 function TitledErrorState(props: React.ComponentProps<typeof ErrorState> & { title: string }) {
@@ -16,11 +17,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
-  const { firebaseUser, appUser, loading, error, refreshClaims } = useAuth()
+  const { firebaseUser, appUser, loading, error, refreshClaims, signupRequest } = useAuth()
 
   if (loading) return <FullPageLoader />
 
   if (!firebaseUser) return <Navigate to="/login" replace />
+
+  // Compte auto-inscrit sans rôle : état de sa demande, aucune donnée.
+  if (!appUser && signupRequest) return <SignupPendingScreen request={signupRequest} />
 
   if (error || !appUser) {
     return (

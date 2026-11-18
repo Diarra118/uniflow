@@ -7,6 +7,9 @@
 
 export const userPath = (uid: string) => `users/${uid}`
 
+/** État de SA demande d'inscription (lecture par son seul titulaire). */
+export const signupStatusPath = (uid: string) => `signupStatus/${uid}`
+
 export const universityMetaPath = (universityId: string) => `universities/${universityId}/meta`
 
 export const platformUniversitiesIndexPath = () => 'platform/universitiesIndex'
