@@ -57,3 +57,20 @@ export async function resendAccountInvite(input: ResendAccountInviteInput) {
   const res = await resendAccountInviteCallable(input)
   return res.data
 }
+
+/** Université ouverte aux inscriptions : identifiant et nom, rien d'autre. */
+export interface SignupUniversity {
+  id: string
+  name: string
+}
+
+const listSignupUniversitiesCallable = httpsCallable<void, { universities: SignupUniversity[] }>(
+  functions,
+  'listSignupUniversities'
+)
+
+/** Liste publique (sans connexion) des universités ouvertes aux inscriptions. */
+export async function listSignupUniversities() {
+  const res = await listSignupUniversitiesCallable()
+  return res.data.universities
+}

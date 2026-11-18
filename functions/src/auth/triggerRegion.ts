@@ -18,3 +18,8 @@ export function profileTriggerRegion(env: NodeJS.ProcessEnv = process.env): stri
   if (env.FUNCTIONS_EMULATOR !== 'true') return PROFILE_TRIGGER_REGION
   return env.PROFILE_TRIGGER_EMULATOR_REGION || EMULATOR_DATABASE_TRIGGER_REGION
 }
+
+/** Même règle pour tout déclencheur Realtime Database du projet (ex :
+ * onUniversityMetaWritten) : europe-west1 en production, us-central1 sous
+ * l'émulateur uniquement. */
+export const databaseTriggerRegion = profileTriggerRegion

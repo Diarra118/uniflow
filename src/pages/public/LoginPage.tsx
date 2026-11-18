@@ -4,7 +4,7 @@ import { Mail, Lock, ArrowRight } from 'lucide-react'
 import { z } from 'zod'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
-import { BrandMark } from '@/shared/components/BrandMark'
+import { AuthLayout } from '@/shared/components/AuthLayout'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 const loginSchema = z.object({
@@ -90,41 +90,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="brand-panel relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
-        <p className="text-sm font-medium tracking-wide opacity-80">
-          Plateforme de gestion universitaire
-        </p>
-
-        <div>
-          <p className="font-display max-w-md text-3xl font-medium leading-snug">
-            Un registre unique, piloté par l'IA, pour accompagner chaque
-            établissement du premier semestre au diplôme.
-          </p>
-          <div className="mt-8 space-y-2">
-            {['Étudiants & inscriptions', 'Notes & examens', 'Paiements & documents'].map(
-              (line, i) => (
-                <div key={line} className="flex items-center gap-3 text-sm">
-                  <span className="brand-panel-accent font-mono-data w-6">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="h-px flex-1 bg-current opacity-20" />
-                  <span className="opacity-85">{line}</span>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        <p className="text-xs opacity-75">
-          © {new Date().getFullYear()} UniFlow — Tous droits réservés
-        </p>
-      </div>
-
-      <div className="flex items-center justify-center bg-base-100 p-6">
-        <div className="w-full max-w-sm">
-          <BrandMark className="mb-8" />
-
+    <AuthLayout>
           <h1 className="font-display text-2xl font-semibold">Connexion</h1>
           <p className="mt-1 text-sm text-base-content/70">
             Accédez à l'espace de votre université.
@@ -220,8 +186,13 @@ export function LoginPage() {
               )}
             </button>
           </form>
-        </div>
-      </div>
-    </div>
+
+          <p className="mt-6 text-center text-sm text-base-content/70">
+            Pas encore de compte ?{' '}
+            <Link to="/inscription" className="font-medium text-primary hover:underline">
+              Créer un compte
+            </Link>
+          </p>
+    </AuthLayout>
   )
 }

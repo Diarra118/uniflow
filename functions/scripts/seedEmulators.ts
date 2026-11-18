@@ -113,6 +113,9 @@ export async function seedEmulators(opts: { adminPassword?: string } = {}) {
     ownerUid: SEED.admin.uid,
     createdAt: now,
   })
+  // Index plateforme (miroir de meta, tenu par onUniversityMetaWritten) :
+  // écrit ici aussi pour ne pas dépendre du délai du déclencheur.
+  await db.ref(`platform/universitiesIndex/${u}`).set({ name: 'Université Démo', plan: 'standard', status: 'active' })
 
   // 3. Administrateur : compte Auth + claims + profil actif.
   await auth.createUser({

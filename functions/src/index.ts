@@ -8,3 +8,4 @@
 export { onUserProfileWritten } from './auth/setCustomClaims'
 export { createUserAccount } from './auth/createUserAccount'
 export { resendAccountInvite } from './auth/resendAccountInvite'
+export { listSignupUniversities, onUniversityMetaWritten } from './signup/directory'
