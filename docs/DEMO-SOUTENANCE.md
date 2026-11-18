@@ -34,11 +34,15 @@ ensuite. La démo est prête quand le terminal affiche « Démo UniFlow prête �
    connecter une fois avec l'admin Horizon, l'admin Baobab, un enseignant et
    un étudiant.
 4. **Répéter le parcours** ci-dessous une fois en entier, puis
-   `npm run demo:reset` pour effacer l'étudiant créé pendant la répétition.
+   `npm run demo:reset` pour effacer les comptes créés pendant la répétition
+   (étudiant avec accès et auto-inscription).
 5. Arrêter par **Ctrl+C**. Le jour J, lancer `npm run demo` **10 minutes
    avant** de passer.
 6. Préparer : navigateur ouvert sur http://localhost:5173 (thème clair), une
-   **fenêtre de navigation privée** pour l'étudiant, un onglet sur
+   **fenêtre de navigation privée** pour les étudiants (Fatou, puis
+   l'auto-inscription d'Aïssatou). Attention : toutes les fenêtres privées
+   partagent la même session, une seule personne peut y être connectée à la
+   fois ; un onglet sur
    l'interface des émulateurs, le fichier des comptes sur un écran non
    projeté. Désactiver la mise en veille et les notifications.
 
@@ -48,18 +52,19 @@ ensuite. La démo est prête quand le terminal affiche « Démo UniFlow prête �
 |---|---|---|---|
 | 0:00 | **Connexion admin** | Se connecter avec `admin@horizon.test` | Page de connexion UniFlow, redirection vers le tableau de bord, rôle affiché |
 | 1:00 | **Listes** | Étudiants (filtre « En attente », recherche « Diallo »), Enseignants, Filières, Cours, Classes | Statuts colorés (vert, orange, gris), « Non attribué », enseignant « (inactif) », nombre d'éléments par université |
-| 3:00 | **Créer un étudiant avec accès** | Étudiants > **Nouvel étudiant** : prénom, nom, matricule `HZ-2026-050`, e-mail `fatou.sy@horizon.test`, filière et classe, cocher **Créer un accès de connexion** > **Créer** | Fenêtre « Accès de connexion créé », invitation envoyée ; sur la fiche : « Accès créé » |
-| 4:00 | **Définir son mot de passe** | Dans le terminal de la démo, copier le lien affiché après « To reset the password for fatou.sy@horizon.test, follow this link ». Il se termine par `newPassword=NEW_PASSWORD_HERE` : remplacer `NEW_PASSWORD_HERE` par `Soutenance2026`, puis l'ouvrir dans la fenêtre privée (retour automatique sur la page de connexion) | En production, la personne reçoit ce lien par e-mail ; l'émulateur l'écrit dans le terminal |
-| 5:00 | **Connexion de l'étudiant** | Fenêtre privée : se connecter avec `fatou.sy@horizon.test` / `Soutenance2026` | Navigation réduite, « Mon dossier », liste des étudiants refusée (« Accès refusé ») |
-| 6:00 | **Suspension en direct** | Laisser l'étudiant sur « Mon dossier ». Interface des émulateurs > Realtime Database (`demo-uniflow`) > `users` > profil de `fatou.sy@horizon.test` > `status` : remplacer `active` par `suspended` | La fenêtre de l'étudiant se déconnecte immédiatement avec « Votre compte a été suspendu… » ; une nouvelle connexion n'ouvre aucun accès |
-| 7:30 | **Rétablir** (facultatif) | Remettre `status` à `active` | L'étudiant peut se reconnecter |
-| 8:00 | **Isolation entre universités** | Fenêtre privée : se connecter avec `admin@baobab.test` | Uniquement les données de l'Institut Baobab ; aucune trace d'Horizon |
-| 9:00 | **Mode sombre** | Icône lune en haut à droite, puis recharger la page et se déconnecter | Thème conservé après rechargement et sur la page de connexion |
-| 9:30 | Conclusion | — | Règles de sécurité testées (isolation, rôles, révocation immédiate) |
+| 2:30 | **Créer un étudiant avec accès** | Étudiants > **Nouvel étudiant** : prénom, nom, matricule `HZ-2026-050`, e-mail `fatou.sy@horizon.test`, filière et classe, cocher **Créer un accès de connexion** > **Créer** | Fenêtre « Accès de connexion créé », invitation envoyée ; sur la fiche : « Accès créé » |
+| 3:15 | **Définir son mot de passe** | Dans le terminal de la démo, copier le lien affiché après « To reset the password for fatou.sy@horizon.test, follow this link ». Il se termine par `newPassword=NEW_PASSWORD_HERE` : remplacer `NEW_PASSWORD_HERE` par `Soutenance2026`, puis l'ouvrir dans la fenêtre privée (retour automatique sur la page de connexion) | En production, la personne reçoit ce lien par e-mail ; l'émulateur l'écrit dans le terminal |
+| 4:00 | **Connexion de l'étudiant** | Fenêtre privée : se connecter avec `fatou.sy@horizon.test` / `Soutenance2026` | Navigation réduite, « Mon dossier », liste des étudiants refusée (« Accès refusé »). Puis **Se déconnecter** |
+| 5:00 | **Auto-inscription** | Même fenêtre privée : page de connexion > **Créer un compte** : prénom `Aïssatou`, nom `Ba`, e-mail `aissatou.ba@horizon.test`, mot de passe `Soutenance2026` (deux fois), université **Université Horizon**, rôle **Étudiant** > **Envoyer ma demande** | Seul le nom des universités est proposé ; écran « Votre demande est en attente de validation par votre université », aucune donnée accessible |
+| 6:00 | **Validation par l'admin** | Fenêtre admin : lien **Inscriptions** (compteur « 1 ») > ligne Ba Aïssatou > **Valider** > matricule `HZ-2026-051` > **Valider** | Sans recharger, la fenêtre privée bascule seule dans l'espace étudiant (« Mon dossier » avec le matricule) ; fiche créée côté admin. Option : montrer un **Refuser** avec motif sur une seconde demande |
+| 7:00 | **Suspension en direct** | Laisser Aïssatou sur « Mon dossier ». Interface des émulateurs > Realtime Database (`demo-uniflow`) > `users` > profil de `aissatou.ba@horizon.test` > `status` : remplacer `active` par `suspended` | La fenêtre privée se déconnecte immédiatement avec « Votre compte a été suspendu… » ; une nouvelle connexion n'ouvre aucun accès |
+| 8:30 | **Isolation entre universités** | Fenêtre privée : se connecter avec `admin@baobab.test` | Uniquement les données de l'Institut Baobab ; aucune trace d'Horizon |
+| 9:30 | **Mode sombre** | Icône lune en haut à droite, puis recharger la page et se déconnecter | Thème conservé après rechargement et sur la page de connexion |
+| 10:00 | Conclusion | — | Règles de sécurité testées (isolation, rôles, révocation immédiate, demandes d'inscription sans aucun droit avant validation) |
 
 Astuce pour la suspension : dans `users`, chaque profil est rangé sous son
 identifiant (uid) ; le bon est celui dont le champ `email` vaut
-`fatou.sy@horizon.test`. L'uid figure aussi dans l'onglet Authentication de
+`aissatou.ba@horizon.test`. L'uid figure aussi dans l'onglet Authentication de
 l'interface des émulateurs (colonne User UID).
 
 ## 4. Problèmes possibles et solution rapide
@@ -74,4 +79,7 @@ l'interface des émulateurs (colonne User UID).
 | **« Mot de passe oublié ? » cliqué pendant la démo** | Aucun e-mail n'est envoyé en local : le lien apparaît dans le terminal de la démo. |
 | **Java introuvable** | Le message indique la commande d'installation ; ou définir `JAVA_HOME`. À vérifier la veille. |
 | **Coupure d'internet** | Aucun impact après le premier lancement en ligne ; les polices changent légèrement d'aspect. |
+| **Liste des universités vide sur « Créer un compte »** | Les fonctions ne sont pas prêtes (attendre « Démo UniFlow prête ») ou l'index n'est pas chargé : Ctrl+C puis `npm run demo` (le lancement réécrit l'index des universités). |
+| **« Une demande d'inscription existe déjà »** ou **« Un compte existe déjà avec cette adresse »** | L'adresse a déjà servi (répétition) : utiliser une autre adresse, ou repartir de zéro avec `npm run demo:reset`. |
+| **L'étudiant validé reste sur « Demande validée »** | Attendre quelques secondes ; sinon « Se déconnecter » puis se reconnecter avec son e-mail et son mot de passe. |
 | **Tout est cassé** | Ctrl+C, `npm run demo:reset`, relancer : environ 1 minute, nouveaux mots de passe dans `docs/COMPTES-DEMO.local.md`. |

@@ -399,6 +399,8 @@ function writeAccountsFile(passwords: Map<string, string>) {
     '5. Révocation : dans l\'interface des émulateurs (Realtime Database), passer',
     '   `users/<uid>/status` à `suspended` pendant qu\'un compte est connecté :',
     '   déconnexion immédiate avec message. Remettre `active` pour rétablir.',
+    '6. Auto-inscription : « Créer un compte » sur la page de connexion, puis',
+    '   lien « Inscriptions » côté admin pour valider ou refuser la demande.',
     ''
   )
   mkdirSync(path.dirname(ACCOUNTS_FILE), { recursive: true })
@@ -407,18 +409,44 @@ function writeAccountsFile(passwords: Map<string, string>) {
 
 export type DemoSeedOutcome = 'created' | 'kept' | 'passwords-regenerated'
 
+/**
+ * Index plateforme (miroir de meta, tenu en production par
+ * onUniversityMetaWritten) : source de la liste publique de l'inscription.
+ * Réécrit à chaque lancement, y compris sur des données importées d'une
+ * version antérieure qui n'avait pas cet index.
+ */
+async function writeUniversityIndex() {
+  const db = seedApp().database()
+  for (const u of DEMO) {
+    const meta = (await db.ref(`universities/${u.id}/meta`).get()).val() as
+      | { name?: string; plan?: string; status?: string }
+      | null
+    if (!meta) continue
+    await db.ref(`platform/universitiesIndex/${u.id}`).set({
+      name: meta.name ?? u.meta.name,
+      plan: meta.plan ?? u.meta.plan,
+      status: meta.status ?? 'active',
+    })
+  }
+}
+
 export async function seedDemo(): Promise<DemoSeedOutcome> {
   await loadRulesIntoEmulator()
   const db = seedApp().database()
   const present = (await db.ref(MARKER).get()).exists()
-  if (present && existsSync(ACCOUNTS_FILE)) return 'kept'
-  if (present) {
+  let outcome: DemoSeedOutcome
+  if (present && existsSync(ACCOUNTS_FILE)) {
+    outcome = 'kept'
+  } else if (present) {
     writeAccountsFile(await regeneratePasswords())
-    return 'passwords-regenerated'
+    outcome = 'passwords-regenerated'
+  } else {
+    await resetEmulators()
+    writeAccountsFile(await createAll(Date.now()))
+    outcome = 'created'
   }
-  await resetEmulators()
-  writeAccountsFile(await createAll(Date.now()))
-  return 'created'
+  await writeUniversityIndex()
+  return outcome
 }
 
 if (require.main === module) {
