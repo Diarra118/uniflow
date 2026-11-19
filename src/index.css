@@ -162,3 +162,59 @@ body {
 [data-theme="uniflow-dark"] .nav-ruled-active {
   color: color-mix(in oklab, var(--color-primary) 72%, white);
 }
+
+/* ------------------------------------------------------------------ */
+/* Tableau de bord : uniquement des couleurs du thème (tons des badges  */
+/* de statut), aucune nouvelle teinte.                                  */
+/* ------------------------------------------------------------------ */
+.dash-number {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Tons des graphiques et pastilles de légende : mêmes couleurs que les
+   badges de statut (StatusBadge). */
+.dash-tone-success { --dash-tone: var(--color-success); }
+.dash-tone-warning { --dash-tone: var(--color-warning); }
+.dash-tone-info { --dash-tone: var(--color-info); }
+.dash-tone-neutral {
+  --dash-tone: color-mix(in oklab, var(--color-base-content) 45%, var(--color-base-100));
+}
+circle[class*="dash-tone-"] { stroke: var(--dash-tone); }
+.dash-ring-track {
+  stroke: color-mix(in oklab, var(--color-base-content) 8%, var(--color-base-100));
+}
+.dash-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--dash-tone);
+}
+
+/* Carte mise en avant (demandes d'inscription à traiter) : teinte du ton
+   « en attente », toujours accompagnée d'un libellé écrit. */
+.dash-highlight {
+  border-color: color-mix(in oklab, var(--color-warning) 55%, var(--color-base-100));
+  background: color-mix(in oklab, var(--color-warning) 9%, var(--color-base-100));
+}
+.dash-icon-warning {
+  background: color-mix(in oklab, var(--color-warning) 22%, var(--color-base-100));
+  color: color-mix(in oklab, var(--color-warning) 55%, black);
+}
+[data-theme="uniflow-dark"] .dash-icon-warning {
+  color: color-mix(in oklab, var(--color-warning) 85%, white);
+}
+
+/* Apparition légère, désactivée si l'utilisateur réduit les animations
+   (de même que le scintillement des squelettes). */
+@keyframes dash-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.dash-reveal {
+  animation: dash-reveal 0.35s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-reveal { animation: none; }
+  .dash .skeleton { animation: none; }
+}

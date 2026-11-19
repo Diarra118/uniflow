@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Rows3, Plus, Pencil, Power } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
+import { useCreateFromUrl } from '@/shared/hooks/useCreateFromUrl'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
 import { StatusBadge } from '@/shared/components/StatusBadge'
@@ -24,7 +25,7 @@ export function ClassesPage() {
   const { classes, loading, error } = useClasses(universityId)
   const { programs } = usePrograms(universityId)
 
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen, setFormOpen] = useCreateFromUrl(canCreate)
   const [editing, setEditing] = useState<ClassGroup | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 

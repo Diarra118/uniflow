@@ -9,6 +9,7 @@
 // - --contrast : mesure le contraste de chaque texte visible de la zone de
 //   contenu (couleurs calculées par le navigateur, fonds composés) et écrit
 //   contrast.json dans le dossier de sortie.
+// - --only=admin,parent : limite les captures à ces rôles.
 // - Les lectures refusées (permission_denied) remontées en console sont
 //   relevées dans console.json ; le script échoue s'il y en a.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -27,6 +28,7 @@ if (!outArg) {
 }
 const OUT = path.resolve(PROJECT, outArg)
 const CONTRAST = process.argv.includes('--contrast')
+const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7).split(',')
 mkdirSync(OUT, { recursive: true })
 
 // Comptes de démo (Université Horizon) : e-mail → mot de passe.
@@ -149,6 +151,17 @@ async function capture(role, view) {
   // Données chargées : plus aucun squelette ni indicateur de chargement.
   await page.waitForFunction(() => !document.querySelector('main .skeleton, main .loading, main [aria-busy="true"]'), null, { timeout: 20000 }).catch(() => {})
   await page.waitForTimeout(800)
+  // Pas de survol résiduel ; hauteur de fenêtre = contenu complet (la zone
+  // <main> défile en interne, fullPage seul ne la déroulerait pas).
+  await page.mouse.move(0, 0)
+  const fullHeight = await page.evaluate(() => {
+    const m = document.querySelector('main')
+    return m.getBoundingClientRect().top + m.scrollHeight
+  })
+  if (fullHeight > view.viewport.height) {
+    await page.setViewportSize({ width: view.viewport.width, height: Math.ceil(fullHeight) })
+    await page.waitForTimeout(300)
+  }
   const file = path.join(OUT, `${role.key}-${view.suffix}.png`)
   await page.screenshot({ path: file, fullPage: true })
   if (CONTRAST && !view.suffix.startsWith('mobile')) {
@@ -173,7 +186,7 @@ try {
     uid: SA.uid, email: SA.email, name: 'Khadija Sy', role: 'super_admin_plateforme', status: 'active', createdAt: Date.now(),
   })
   browser = await chromium.launch({ channel: process.env.AUDIT_BROWSER_CHANNEL ?? 'msedge', headless: true })
-  for (const role of ROLES) for (const view of VIEWS) await capture(role, view)
+  for (const role of ROLES.filter((r) => !ONLY || ONLY.includes(r.key))) for (const view of VIEWS) await capture(role, view)
 } finally {
   await browser?.close()
   await app.database().ref(`users/${SA.uid}`).remove().catch(() => {})

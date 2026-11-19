@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { BookOpen, Plus, Pencil } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
+import { useCreateFromUrl } from '@/shared/hooks/useCreateFromUrl'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
 import { ListPage } from '@/shared/components/ListPage'
@@ -32,7 +33,7 @@ export function CoursesPage() {
     [allTeachers]
   )
 
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen, setFormOpen] = useCreateFromUrl(canCreate)
   const [editing, setEditing] = useState<CourseUnit | null>(null)
 
   const programName = (programId: string) =>

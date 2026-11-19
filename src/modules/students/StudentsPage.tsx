@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GraduationCap, Plus, Search, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
+import { useCreateFromUrl } from '@/shared/hooks/useCreateFromUrl'
 import { useCan } from '@/core/rbac/useCan'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
 import { StatusBadge } from '@/shared/components/StatusBadge'
@@ -30,7 +31,7 @@ export function StudentsPage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen, setFormOpen] = useCreateFromUrl(canCreate)
 
   const { students, loading, error, hasMore, isSearching, loadMore } = useStudents(
     universityId,
