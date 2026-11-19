@@ -175,6 +175,7 @@ test('admin : les chiffres correspondent aux données de démo de SON universit�
   // Captures de l'état « demandes à traiter », en clair puis en sombre.
   for (const theme of ['clair', 'sombre']) {
     await page.mouse.move(0, 0)
+    await page.waitForTimeout(400) // fin de la transition de couleur des cartes
     await page.screenshot({ path: fileURLToPath(new URL(`dashboard-admin-demandes-${theme}.png`, OUT)) })
     await page.click('button[aria-label="Changer de thème"]')
   }
