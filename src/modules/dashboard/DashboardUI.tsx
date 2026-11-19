@@ -273,13 +273,18 @@ export function StatusDistribution({ counts }: { counts: Record<EnrollmentStatus
 export function ComingSoonCard({
   index = 0,
   items,
+  wide = false,
+  className = '',
 }: {
   index?: number
   items: { icon: LucideIcon; label: string; detail: string }[]
+  /** Carte pleine largeur : modules répartis en colonnes. */
+  wide?: boolean
+  className?: string
 }) {
   return (
-    <Panel id="coming-soon" index={index} icon={Clock} title="Bientôt disponible">
-      <ul className="space-y-3">
+    <Panel id="coming-soon" index={index} icon={Clock} title="Bientôt disponible" className={className}>
+      <ul className={wide ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4' : 'space-y-3'}>
         {items.map((m) => (
           <li key={m.label} className="flex items-start gap-3">
             <m.icon size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-base-content/50" />
