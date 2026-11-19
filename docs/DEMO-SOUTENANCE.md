@@ -24,7 +24,7 @@ ensuite. La démo est prête quand le terminal affiche « Démo UniFlow prête �
 
 ## 2. La veille
 
-1. **Avec internet** : `npm install && npm --prefix functions install`, puis
+1. **Avec internet** : `npm run doctor`, `npm run setup`, puis
    `npm run demo` une fois. Ce premier lancement met en cache les émulateurs
    (`~/.cache/firebase/emulators`) ; ensuite la démo fonctionne hors ligne
    (seules les polices Google manquent, remplacées par celles du système).

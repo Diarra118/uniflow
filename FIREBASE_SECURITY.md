@@ -94,9 +94,9 @@ d'un tenant, même en lecture seule. Trois garanties indépendantes :
 - **Révocation** : une entrée `parentLinks` doit être explicitement mise à
   `authorized: false` (ou supprimée) par un `admin_universite` en cas de
   changement de situation (ex. retrait de garde) — ce n'est pas automatique
-  à la suppression du compte étudiant tant que ce module n'est pas
-  implémenté (Phase 2+ pour la UI de gestion, la règle de sécurité est déjà
-  effective dès maintenant).
+  à la suppression du compte étudiant. Aucune interface de gestion des
+  liens parent-enfant n'est encore livrée ; la règle de sécurité, elle, est
+  effective.
 
 ## 6. RBAC : correspondance `permissions.ts` ↔ `database.rules.json`
 
@@ -119,13 +119,19 @@ matrices ne doit évoluer seule.
 ## 7. `.indexOn` déclarés
 
 RTDB ralentit fortement (et journalise un avertissement) toute requête
-`orderByChild`/`orderByValue` sans index déclaré. À ce stade (Phase 1),
-seul `platform/universitiesIndex` a un besoin de tri déclaré
-(`plan`, `status`, pour un futur filtrage côté espace commercial). Les
-`.indexOn` des sous-collections pédagogiques (`students` par `lastName`,
-`grades` par `studentId`, etc.) seront ajoutés au fil de l'implémentation
-de chaque module, en même temps que ses requêtes réelles — les déclarer
-maintenant sans usage réel serait de la spéculation non vérifiable.
+`orderByChild`/`orderByValue` sans index déclaré. Index déclarés, chacun
+avec les requêtes réelles du module livré :
+
+| Chemin | `.indexOn` |
+|---|---|
+| `students`, `teachers` | `lastName`, `searchKey` (tri et recherche des listes) |
+| `programs`, `courses`, `classes` | `name` |
+| `signupRequests` | `status`, `createdAt` (demandes à traiter) |
+| `platform/universitiesIndex` | `plan`, `status` |
+
+Les modules non livrés (`grades` par `studentId`, etc.) déclareront les
+leurs avec leurs requêtes réelles : les déclarer sans usage serait de la
+spéculation non vérifiable.
 
 ## 8. Configuration publique vs secrets serveur
 
@@ -159,8 +165,8 @@ maintenant sans usage réel serait de la spéculation non vérifiable.
   échelle sans `.indexOn` dédié — à affiner phase par phase avec les
   requêtes réelles de chaque module (voir §7).
 - La révocation d'un `parentLink` est une opération manuelle
-  (`admin_universite`) tant que le module de gestion des utilisateurs
-  n'est pas implémenté — pas d'automatisme à la suppression d'un compte
+  (`admin_universite`) tant qu'aucune interface ne gère les liens
+  parent-enfant — pas d'automatisme à la suppression d'un compte
   étudiant pour l'instant.
 - Le calcul des insights IA (Phase 9) devra explicitement écrire
   `indicativeOnly: true` sur chaque noeud généré, et aucune Cloud Function

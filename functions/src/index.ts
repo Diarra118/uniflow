@@ -1,9 +1,9 @@
 /**
  * Point d'entrée des Cloud Functions.
- * Phase 1 : uniquement l'attribution des custom claims (fondation du RBAC
- * et du multi-tenant). Les fonctions métier (notifications, calculs IA,
- * webhooks de paiement...) seront ajoutées phase par phase, dans leur
- * propre dossier sous src/ (ex : src/ai/, src/triggers/).
+ * Livré : attribution des custom claims (auth/setCustomClaims), création et
+ * renvoi des accès (auth/), auto-inscription et sa validation (signup/).
+ * Les fonctions des modules à venir (notifications, calculs IA, webhooks de
+ * paiement...) auront chacune leur dossier sous src/.
  */
 export { onUserProfileWritten } from './auth/setCustomClaims'
 export { createUserAccount } from './auth/createUserAccount'

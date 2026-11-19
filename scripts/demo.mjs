@@ -44,9 +44,10 @@ function run(command, env = {}) {
 }
 
 // 0. Prérequis
-for (const dir of ['node_modules', 'functions/node_modules']) {
+const firebaseBin = path.join('node_modules', '.bin', isWin ? 'firebase.cmd' : 'firebase')
+for (const dir of ['node_modules', 'functions/node_modules', firebaseBin]) {
   if (!existsSync(path.join(ROOT, dir))) {
-    fail(`Dépendances absentes (${dir}). Lancez d'abord : npm install && npm --prefix functions install`)
+    fail(`Dépendances absentes (${dir}). Lancez d'abord : npm run setup  (vérification du poste : npm run doctor)`)
     process.exit(1)
   }
 }

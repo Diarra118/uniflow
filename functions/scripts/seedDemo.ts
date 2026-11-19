@@ -214,7 +214,7 @@ export function demoAccounts(): Account[] {
         name: `${u.parent.firstName} ${u.parent.lastName}`,
         role: 'parent',
         universityId: u.id,
-        note: `Parent lié à ${child?.firstName} ${child?.lastName} (parentLinks) ; tableau de bord seulement (pas encore de module parent).`,
+        note: `Parent lié à ${child?.firstName} ${child?.lastName} (parentLinks) ; tableau de bord parent (enfants rattachés). Notes et paiements : modules non livrés.`,
       })
     }
   }

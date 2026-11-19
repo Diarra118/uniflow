@@ -1,10 +1,10 @@
 import type { Role } from '@/core/types'
 
 /**
- * Ressources métier soumises au contrôle d'accès. La plupart ne sont pas
- * encore implémentées (Phase 1 = fondations uniquement) mais sont déclarées
- * ici pour que la matrice de permissions soit complète dès la conception,
- * conformément à l'architecture validée.
+ * Ressources métier soumises au contrôle d'accès. Toutes sont déclarées
+ * ici, y compris celles des modules pas encore livrés (notes, paiements,
+ * e-learning…), pour que la matrice de permissions soit complète dès la
+ * conception, conformément à l'architecture validée.
  */
 export type Resource =
   | 'students' // l'ensemble des fiches étudiants (liste et fiches d'autrui)

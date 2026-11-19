@@ -22,9 +22,9 @@ export const parentLinkPath = (universityId: string, parentUid: string, studentI
   `universities/${universityId}/parentLinks/${parentUid}/${studentId}`
 
 /**
- * Sous-collections métier d'un tenant (Phase 2+). Déclarées ici dès
- * maintenant pour que les futurs modules réutilisent ce même point de
- * passage plutôt que de construire leurs chemins ailleurs.
+ * Sous-collections métier d'un tenant, livrées ou non. Toutes passent par
+ * ce point unique, y compris celles des modules à venir, plutôt que de
+ * construire leurs chemins ailleurs.
  */
 export type TenantSubcollection =
   | 'students'

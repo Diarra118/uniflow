@@ -83,9 +83,20 @@ Décisions d'implémentation notables :
   avant livraison, avec vérification que le CSS compilé contient bien les
   classes DaisyUI attendues.
 
-## Prochaine étape
+## 5. Suite : versions livrées après la Phase 1
 
-Phase 2 : module Étudiants (CRUD + import), sur le même gabarit que celui
-utilisé lors d'une itération précédente du projet (schema Zod → couche
-d'accès aux données scopée tenant → hook temps réel → page), adapté à
-Realtime Database.
+Les modules suivants ont été livrés sur le gabarit prévu (schéma Zod →
+couche d'accès aux données scopée tenant → hook temps réel → page), adapté
+à Realtime Database. Le détail est dans l'historique Git.
+
+| Version (tag) | Contenu |
+|---|---|
+| Phases 2 et 3 (premier commit) | Étudiants, enseignants, filières, cours et classes ; création des accès de connexion par l'admin, avec invitation par e-mail |
+| — | Audit de sécurité (lots 1 à 3) : dépendances, Node 22, droits enseignant, révocation immédiate des accès |
+| `v1.0-soutenance` | Démo locale en une commande (`npm run demo`) avec jeu de données réaliste ; finitions de l'interface |
+| `v1.1-soutenance` | Auto-inscription (`/inscription`) validée ou refusée par l'admin de l'université |
+| `v1.2-soutenance` | Tableau de bord propre à chaque rôle, espace plateforme |
+
+Restent à faire, dans l'ordre du plan : notes et examens, paiements,
+documents et bibliothèque, e-learning, notifications, IA, espace
+commercial de la plateforme (voir README, « Feuille de route »).

@@ -1,7 +1,7 @@
 /**
- * Types de domaine — Phase 1 (fondations).
- * Les types des modules métier (étudiants, notes, paiements, etc.) seront
- * ajoutés phase par phase, au même endroit que leur implémentation.
+ * Types de domaine : fondations (rôles, profils, universités), puis un bloc
+ * par module livré (étudiants, enseignants, filières, cours, classes,
+ * inscriptions). Les modules suivants ajouteront leurs types ici.
  */
 
 export type Role =

@@ -1,106 +1,197 @@
-# SaaS de Gestion Universitaire Piloté par IA — Phase 1 (Fondations)
+# UniFlow — gestion universitaire multi-établissements
 
-Ce dépôt contient les **fondations réelles et fonctionnelles** de la
-plateforme : authentification Firebase, custom claims, contexte
-multi-tenant, RBAC, shell d'application responsive (clair/sombre), pages
-publiques, et routing protégé avec redirection selon le rôle.
+## Lancer UniFlow (jury)
 
-**Aucun module métier n'est implémenté à ce stade** (étudiants, enseignants,
-notes, paiements, e-learning, etc.) — conformément au plan de développement
-par phases validé dans l'architecture v1.1.
+UniFlow est une plateforme de gestion universitaire où chaque université
+gère ses étudiants, enseignants, filières, cours et classes, avec un espace
+propre à chaque rôle. Elle fonctionne **entièrement en local, sur les
+émulateurs Firebase** : aucun compte Firebase, aucune clé à renseigner,
+aucune connexion à un service payant.
 
-## Stack
+**Vidéo de démonstration** : [LIEN VIDÉO]
+
+### Prérequis
+
+| Outil | Version | Téléchargement |
+|---|---|---|
+| Node.js | **22** (LTS) | https://nodejs.org/fr/download |
+| Java | **17 ou plus** (21 conseillé) | https://adoptium.net/temurin/releases/?version=21 |
+
+Une connexion internet est nécessaire la première fois (dépendances et
+émulateurs, environ 500 Mo). Ensuite, la démo fonctionne aussi hors ligne.
+Pour récupérer le code sans Git : bouton **Code > Download ZIP** sur
+GitHub, puis ouvrez un terminal dans le dossier décompressé (étape 2).
+
+### Commandes, dans l'ordre
+
+```bash
+git clone https://github.com/Diarra118/uniflow.git
+cd uniflow
+npm run doctor   # vérifie Node et Java ; indique quoi installer s'ils manquent
+npm run setup    # installe les dépendances (une seule fois, 2 à 5 minutes)
+npm run demo     # démarre UniFlow : prêt quand « Démo UniFlow prête » s'affiche
+```
+
+Puis ouvrez **http://localhost:5173**. Le premier démarrage prend 1 à
+3 minutes ; les suivants, environ 40 secondes.
+
+- **Arrêter** : `Ctrl+C` dans le terminal. Les données sont sauvegardées
+  et retrouvées au prochain `npm run demo`.
+- **Repartir de zéro** : `npm run demo:reset` (jeu de démo recréé,
+  nouveaux mots de passe), qui démarre ensuite la démo.
+
+> **Pourquoi `npm run demo` et pas `npm run dev` ?**
+> - `npm run dev` ne lance que l'interface : seule, elle ne permet ni de se connecter, ni de créer un compte.
+> - UniFlow s'appuie sur un serveur Firebase : authentification, base de données, règles de sécurité, et Cloud Functions qui attribuent les rôles et valident les inscriptions.
+> - `npm run demo` démarre ce serveur en local grâce aux émulateurs Firebase, charge les règles et les données de démonstration, puis lance lui-même l'interface.
+> - Tout se teste ainsi gratuitement, sans compte Firebase ni service payant, avec les mêmes règles de sécurité qu'en production. Le déploiement en ligne est décrit dans [docs/RECETTE.md](docs/RECETTE.md).
+
+### Comptes de démonstration
+
+Les comptes sont **créés sur votre machine** au premier `npm run demo`.
+Leurs mots de passe, tirés au hasard à ce moment-là, sont écrits dans le
+fichier **`docs/COMPTES-DEMO.local.md`** de votre copie du projet. Ils
+n'existent que dans les émulateurs de votre poste : **aucun mot de passe
+n'est publié dans ce dépôt**.
+
+| Rôle | E-mail de connexion | Ce qu'on peut voir |
+|---|---|---|
+| Admin d'université | `admin@horizon.test` | Tableau de bord, toutes les listes, création des accès, validation des inscriptions |
+| Enseignant | `moussa.traore@horizon.test` | Ses cours, listes en lecture seule |
+| Étudiante | `awa.diallo@horizon.test` | « Mon dossier », accès aux listes refusé |
+| Parent | `mamadou.diallo@horizon.test` | Espace parent, enfant rattaché |
+| Admin d'une autre université | `admin@baobab.test` | Uniquement les données de l'Institut Baobab (isolation) |
+
+Le fichier liste aussi les autres comptes (9 au total, sur deux
+universités fictives). Pour passer d'un compte à l'autre :
+**Se déconnecter** (menu en haut à droite), ou une fenêtre de navigation
+privée pour un second compte en parallèle.
+
+### Tester l'inscription d'un nouveau compte
+
+1. Dans une **fenêtre de navigation privée**, ouvrez http://localhost:5173
+   puis **Créer un compte**.
+2. Remplissez : prénom, nom, une adresse inventée (par exemple
+   `nouvel.etudiant@horizon.test`), un mot de passe d'au moins
+   8 caractères (deux fois), université **Université Horizon**, rôle
+   **Étudiant**, puis **Envoyer ma demande**. L'écran « Demande en
+   attente » s'affiche : le compte n'a encore accès à rien.
+3. Dans la fenêtre normale, connectez-vous avec `admin@horizon.test`,
+   ouvrez **Inscriptions** (le compteur indique 1), cliquez **Valider** sur
+   la demande, saisissez un matricule (par exemple `HZ-2026-100`), puis
+   **Valider**.
+4. Sans recharger, la fenêtre privée bascule d'elle-même dans l'espace
+   étudiant (« Mon dossier »). Le bouton **Refuser** fonctionne de la même
+   façon, avec un motif affiché à la personne.
+
+Un parcours complet de 10 minutes (création d'un accès par l'admin,
+suspension en direct, isolation entre universités, mode sombre) est
+détaillé dans [docs/DEMO-SOUTENANCE.md](docs/DEMO-SOUTENANCE.md).
+
+### Problèmes fréquents
+
+| Problème | Solution |
+|---|---|
+| `npm run doctor` : **Java introuvable** | Installez Java 21 (lien ci-dessus ; Windows : `winget install EclipseAdoptium.Temurin.21.JDK`), **fermez et rouvrez le terminal**, relancez `npm run doctor`. Un JDK installé ailleurs : définissez `JAVA_HOME`. |
+| `npm run doctor` : **mauvaise version de Node** | Installez Node 22 (lien ci-dessus). Avec nvm : `nvm install 22` puis `nvm use 22`. |
+| Windows PowerShell : « l'exécution de scripts est désactivée » | Lancez les commandes dans l'**Invite de commandes** (`cmd`), ou une fois : `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
+| « Dépendances absentes » | Lancez `npm run setup`, puis `npm run demo`. |
+| **Port occupé** (« Port 5173 is already in use », « port taken ») | Une démo tourne déjà : fermez-la (`Ctrl+C` dans son terminal). Sinon, trouvez le processus : Windows `netstat -ano \| findstr :5173` puis `taskkill /PID <numéro> /F` ; macOS/Linux `lsof -i :5173` puis `kill <numéro>`. Ports utilisés : 4000, 4400, 4500, 5001, 5173, 9000, 9099. |
+| Premier démarrage long, ou arrêt pendant le téléchargement des émulateurs | Vérifiez la connexion internet, attendez jusqu'à 3 minutes, sinon `Ctrl+C` puis `npm run demo`. |
+| « Mot de passe incorrect » avec un compte de démo | Reprenez le mot de passe dans `docs/COMPTES-DEMO.local.md` : il change après chaque `npm run demo:reset`. Fichier supprimé : `npm run demo` en génère de nouveaux. |
+| Liste des universités vide sur « Créer un compte » | Attendez « Démo UniFlow prête » dans le terminal, puis rechargez la page (F5). |
+| « Une demande d'inscription existe déjà » ou « Un compte existe déjà » | L'adresse a déjà servi : prenez-en une autre, ou repartez de zéro avec `npm run demo:reset`. |
+| Page blanche ou « Accès refusé » inattendu | Rechargez la page (F5). Sinon `Ctrl+C`, puis `npm run demo`. |
+| Rien ne va plus | `Ctrl+C`, puis `npm run demo:reset`. |
+
+---
+
+## Présentation
+
+UniFlow est un SaaS **multi-tenant** : chaque université (tenant) a ses
+données isolées, et cinq rôles (`super_admin_plateforme`,
+`admin_universite`, `teacher`, `student`, `parent`) ont chacun leurs
+droits, vérifiés côté serveur par les règles de sécurité Firebase.
+
+### Stack
 
 React + TypeScript + Vite · Tailwind CSS + DaisyUI · Lucide React ·
 React Router · Firebase Authentication · Firebase Realtime Database ·
-Firebase Storage · Cloud Functions (Node.js/TypeScript). Pas de Next.js,
-pas de Supabase, pas de base SQL.
+Cloud Functions (Node.js 22/TypeScript). Pas de Next.js, pas de Supabase,
+pas de base SQL.
 
-## Ce qui est fonctionnel dès maintenant
+### Fonctionnalités livrées
 
-- **Authentification Firebase** (email/mot de passe), réinitialisation de
-  mot de passe, gestion de session réelle.
+- **Authentification Firebase** (e-mail/mot de passe), mot de passe
+  oublié, gestion de session réelle.
+- **Étudiants, enseignants, filières, cours, classes** : listes avec
+  recherche et filtres, fiches, création et modification par l'admin de
+  l'université, lecture adaptée pour l'enseignant, « Mon dossier » pour
+  l'étudiant.
+- **Accès de connexion créés par l'admin** depuis une fiche (Cloud
+  Function `createUserAccount`), avec invitation par e-mail et renvoi.
+- **Auto-inscription** (`/inscription`) : la demande ne donne aucun droit
+  tant que l'admin de l'université ne l'a pas validée ; refus avec motif.
+- **Tableau de bord propre à chaque rôle** (admin, enseignant, étudiant,
+  parent) et espace plateforme pour le `super_admin_plateforme`.
 - **Custom claims comme source de vérité RBAC/multi-tenant** (`role`,
-  `universityId`) — jamais un champ de donnée lisible/modifiable côté
-  client. Attribués par la Cloud Function `onUserProfileWritten`.
-- **RBAC complet** : matrice de permissions (`src/core/rbac/permissions.ts`)
-  pour les 5 rôles, doublée par des règles équivalentes dans
-  `database.rules.json`.
+  `universityId`), posés uniquement par la Cloud Function
+  `onUserProfileWritten` — jamais un champ modifiable côté client.
+- **RBAC complet** : matrice de permissions
+  (`src/core/rbac/permissions.ts`) doublée par des règles équivalentes
+  dans `database.rules.json`.
 - **Isolation multi-tenant** : toute donnée pédagogique vit sous
-  `universities/{universityId}/...` ; un helper unique
-  (`tenantCollectionPath`) empêche par construction d'omettre le
-  `universityId`.
-- **Cloisonnement strict du `super_admin_plateforme`** : accès uniquement à
-  `platform/universitiesIndex` (métadonnées commerciales), jamais aux
-  données pédagogiques d'un tenant — vérifié à la fois par la forme de
-  l'arbre et par les Security Rules.
-- **Relations parent-enfant** (`parentLinks`) : un parent peut être
-  rattaché à plusieurs enfants ; chaque lecture de donnée d'un enfant par
-  un parent est conditionnée à une entrée `parentLinks` autorisée.
-- **Shell d'application** responsive : sidebar (aperçu des modules à venir,
-  sans données ni routes fonctionnelles), navbar, drawer mobile, thèmes
-  clair/sombre persistés.
-- **Redirection selon le rôle** : `super_admin_plateforme` → `/app/plateforme`,
-  autres rôles → `/app`.
-- Interface entièrement en français.
+  `universities/{universityId}/...` ; le `super_admin_plateforme` ne voit
+  que les métadonnées commerciales, jamais les données pédagogiques.
+- **Révocation immédiate** : suspendre un profil ou changer son rôle coupe
+  ses accès sur-le-champ et déconnecte la personne.
+- **Relations parent-enfant** (`parentLinks`) contrôlées par les règles.
+- Interface responsive, thèmes clair et sombre, entièrement en français.
+- **Tests** : règles de sécurité, Cloud Functions, parcours complets dans
+  le navigateur, sur émulateurs (voir plus bas).
 
-## Lancer la démo
+Les modules notes et examens, paiements, documents, e-learning et
+notifications ne sont **pas encore livrés** : l'interface les annonce comme
+« Bientôt disponible », sans lien ni donnée (voir « Feuille de route »).
 
-Démo complète sur les **émulateurs Firebase** de votre poste (projet fictif
-`demo-uniflow`) : aucun projet Firebase réel, aucun plan payant, aucune
-clé à renseigner.
+### Détails de la démo locale
 
-**Prérequis** : Node 22, Java 17+ (trouvé automatiquement, voir
-`scripts/with-java.mjs`), firebase-tools (`npm install -g firebase-tools`).
-
-```bash
-npm install && npm --prefix functions install   # une seule fois
-npm run demo
-```
-
-- Application : http://localhost:5173. Interface des émulateurs :
+- Interface des émulateurs (comptes, base de données) :
   http://127.0.0.1:4000.
-- **Comptes et mots de passe** : `docs/COMPTES-DEMO.local.md`, écrit au
-  premier lancement (fichier local non versionné, mots de passe valables
-  dans les émulateurs uniquement, jamais affichés dans le terminal).
-- **Arrêt : Ctrl+C**. Les émulateurs sauvegardent leurs données dans
-  `.demo-data/` (non versionné) ; le lancement suivant les réimporte : les
-  fiches créées et les accès ouverts pendant la démo sont conservés.
-- `npm run demo:reset` efface les données sauvegardées et recrée le jeu de
-  démo (nouveaux mots de passe). Supprimer seulement
-  `docs/COMPTES-DEMO.local.md` régénère les mots de passe en conservant les
-  données.
+- **Contenu** : deux universités fictives (Université Horizon, Institut
+  supérieur Baobab), chacune avec son administrateur, des enseignants, des
+  étudiants, des filières, des cours et des classes, plus un parent lié à
+  un enfant. Le déclencheur `onUserProfileWritten` est actif : la
+  suspension d'un profil dans l'interface des émulateurs déconnecte
+  immédiatement l'utilisateur concerné.
+- **Ce que fait `npm run demo`** : compile les fonctions, démarre les
+  émulateurs Auth, Database et Functions sur le projet fictif
+  `demo-uniflow` (`--import` et `--export-on-exit` sur `.demo-data/`, non
+  versionné), charge `database.rules.json`, importe le jeu de démo s'il
+  n'existe pas encore (`functions/scripts/seedDemo.ts`), puis lance le
+  front en mode émulateurs.
+- Supprimer seulement `docs/COMPTES-DEMO.local.md` régénère les mots de
+  passe en conservant les données.
+- **Sans internet** : la démo fonctionne hors ligne après un premier
+  lancement en ligne. Seules les polices Google manquent (polices système à
+  la place). Détails : [docs/DEMO-HORS-LIGNE.md](docs/DEMO-HORS-LIGNE.md).
+- Les suites de tests utilisent leurs propres émulateurs : arrêtez la démo
+  avant de les lancer.
 
-**Contenu** : deux universités fictives (Université Horizon, Institut
-supérieur Baobab), chacune avec son administrateur, des enseignants, des
-étudiants, des filières, des cours et des classes, plus un parent lié à un
-enfant. 9 comptes de connexion couvrent les rôles admin, enseignant,
-étudiant et parent. Le déclencheur `onUserProfileWritten` est actif : la
-suspension d'un profil dans l'interface des émulateurs déconnecte
-immédiatement l'utilisateur concerné.
+## Développement
 
-**Ce que fait `npm run demo`** : compile les fonctions, démarre les
-émulateurs Auth, Database et Functions (`--import` et `--export-on-exit`
-sur `.demo-data`), charge `database.rules.json`, importe le jeu de démo s'il
-n'existe pas encore (`functions/scripts/seedDemo.ts`), puis lance le front
-en mode émulateurs.
-
-**Sans internet** : la démo fonctionne hors ligne, après un premier
-lancement en ligne qui met en cache les émulateurs. Seules les polices
-Google manquent (polices système à la place). Détails :
-[docs/DEMO-HORS-LIGNE.md](docs/DEMO-HORS-LIGNE.md).
-
-Les ports 5173, 4000, 4400, 4500, 5001, 9000 et 9099 doivent être libres.
-Les suites de tests utilisent leurs propres émulateurs : arrêtez la démo
-avant de les lancer.
-
-## Démarrage local
+### Démarrage contre un vrai projet Firebase
 
 ```bash
-npm install
+npm run setup
 cp .env.example .env.local   # renseigner vos clés Firebase (voir FIREBASE_SECURITY.md) — fichier non versionné
 npm run dev
 ```
+
+L'identifiant du projet Firebase réel n'est pas versionné : `.firebaserc`
+ne désigne que le projet fictif `demo-uniflow`. Voir
+[docs/RECETTE.md](docs/RECETTE.md) pour le configurer sur votre poste.
+
 
 ### Cloud Functions
 
@@ -144,12 +235,15 @@ Toute l'application tourne en local sur les émulateurs Auth, Realtime
 Database et Functions, sur le projet fictif `demo-uniflow` : aucun projet
 réel, aucune facturation, aucun email réel.
 
-Prérequis : Node 22, `firebase-tools` (`npm i -g firebase-tools`) et
-Java 17+ (détecté automatiquement, y compris le JDK d'Android Studio ;
-sinon `winget install EclipseAdoptium.Temurin.21.JDK`).
+Prérequis : Node 22 et Java 17+ (`npm run doctor` les vérifie ; Java est
+détecté automatiquement, y compris le JDK d'Android Studio). La CLI
+Firebase est une dépendance du projet, installée par `npm run setup`. Pour
+une démo en une commande, préférez `npm run demo` (section « Lancer
+UniFlow (jury) ») ; les étapes ci-dessous séparent émulateurs, seed et
+front pour le développement.
 
 ```bash
-npm install && npm --prefix functions install
+npm run setup
 # Terminal 1 — émulateurs (compile les functions puis démarre)
 npm run emulators
 # Terminal 2 — données de démo (réinitialise les émulateurs à chaque fois)
@@ -213,10 +307,11 @@ ID token révoqué, lui, est bien refusé.
 ### Déploiement
 
 ```bash
-firebase deploy --only functions,database
+npx firebase deploy --only functions,database --project <ID_DU_PROJET>
 ```
 
-`database` publie `database.rules.json` : les règles présentes dans la
+Procédure complète, avec un projet de recette séparé et sans identifiant
+réel dans le dépôt : [docs/RECETTE.md](docs/RECETTE.md). `database` publie `database.rules.json` : les règles présentes dans la
 console Firebase sont **remplacées** par ce fichier. Copiez-les d'abord
 dans `database.rules.backup-console.json` et comparez.
 
@@ -346,20 +441,29 @@ src/
   core/
     firebase/     # config, contexte d'auth, chemins RTDB scopés tenant
     rbac/          # matrice de permissions, useCan, getHomeRoute
-    types/         # types de domaine (Phase 1 uniquement)
-  modules/         # un dossier vide par module métier — implémentation
-                    # phase par phase, aucun code présent à ce stade
+    types/         # types de domaine
+  modules/         # un dossier par module métier
+    students/ teachers/ programs/ courses/ classes/   # livrés
+    accounts/      # accès de connexion (création, renvoi d'invitation)
+    signup/        # demandes d'inscription et leur validation
+    dashboard/     # tableau de bord par rôle
+    grades/ payments/ elearning/ …                    # réservés, vides
   shared/
     components/    # Sidebar, Navbar, AppShell, ProtectedRoute, états UI
-    hooks/         # useTheme
+    hooks/         # useTheme, useDocumentTitle, useCreateFromUrl
     config/        # libellés de rôles
+    utils/         # pluriels, couleurs de statut
   pages/
-    public/        # LoginPage, ForgotPasswordPage
+    public/        # LoginPage, ForgotPasswordPage, SignupPage
     app/           # DashboardPage, PlatformHomePage
 functions/
   src/
     auth/          # custom claims, createUserAccount, resendAccountInvite
-    triggers/       # vide — déclencheurs métier des phases suivantes
+    signup/        # liste des universités, dépôt et validation des demandes
+  scripts/         # jeux de données des émulateurs (démo, tests)
+scripts/           # demo, doctor, détection de Java
+tests/audit/       # tests de bout en bout sur émulateurs (règles, serveur, navigateur)
+rules/             # tests unitaires des Security Rules
 database.rules.json  # Security Rules RTDB (voir FIREBASE_SECURITY.md)
 ```
 
@@ -387,12 +491,16 @@ Points identifiés lors des revues, non traités à ce stade :
    email d'invitation distinct, aux couleurs de l'établissement, et une
    durée de validité plus longue (jeton d'invitation maison).
 
-## Plan de développement (rappel)
+## Feuille de route
 
-Phase 1 (ce livrable) → Étudiants → Enseignants/Filières/Cours/Classes →
-Notes/Examens → Inscriptions/Paiements → Documents/Bibliothèque →
-E-learning → Notifications → IA & Insights → Espace commercial plateforme
-→ Durcissement sécurité & audit RGPD.
+| État | Étape |
+|---|---|
+| Livré | Fondations (authentification, custom claims, RBAC, multi-tenant, shell) |
+| Livré | Étudiants · Enseignants, filières, cours, classes · Accès de connexion |
+| Livré | Audit de sécurité, démo locale en une commande (`v1.0-soutenance`) |
+| Livré | Auto-inscription validée par l'admin (`v1.1-soutenance`) |
+| Livré | Tableau de bord par rôle, espace plateforme (`v1.2-soutenance`) |
+| À venir | Notes/Examens → Inscriptions pédagogiques/Paiements → Documents/Bibliothèque → E-learning → Notifications → IA & Insights → Espace commercial plateforme → Durcissement sécurité & audit RGPD |
 
 Voir `PROMPTS.md` pour l'historique des décisions structurantes et
 `FIREBASE_SECURITY.md` pour le détail du modèle de sécurité.

@@ -7,17 +7,36 @@ recette distinct de la production. Aucune valeur secrète ne figure ici.
 > Elle exige le **plan Blaze** (paiement à l'usage, § 2) : Cloud Functions
 > de 2ᵉ génération et appels sortants pour les invitations. Le projet n'a
 > pas ce plan aujourd'hui. En attendant, la démonstration se fait en local
-> sur émulateurs (`npm run demo`, README « Lancer la démo »), où le
+> sur émulateurs (`npm run demo`, README « Lancer UniFlow (jury) »), où le
 > déclencheur `onUserProfileWritten` s'exécute aussi (région `us-central1`
 > sous l'émulateur uniquement). Les tests R0 à R7 (§ 6) restent à passer
 > sur un vrai projet : région `europe-west1`, runtime Node 22, App Check,
 > e-mails réels et révocation effective des refresh tokens (que l'émulateur
 > Auth ne contrôle pas).
 
-> ⚠️ `.firebaserc` désigne le projet de **production** comme projet par
-> défaut. Toutes les commandes ci-dessous passent donc **explicitement**
-> `--project <ID_RECETTE>`. N'exécutez jamais `firebase deploy` sans cette
-> option.
+> ⚠️ **Identifiant du projet.** Le dépôt est public : `.firebaserc` ne
+> désigne que le projet **fictif** `demo-uniflow`, celui des émulateurs.
+> Aucun identifiant de projet réel n'est versionné. L'identifiant réel
+> (recette ou production) se configure **uniquement sur votre poste** :
+>
+> - de préférence, en le passant à chaque commande :
+>   `--project <ID_RECETTE>` (c'est le cas de toutes les commandes
+>   ci-dessous) ;
+> - ou avec `firebase use <ID_RECETTE>`, qui l'enregistre dans la
+>   configuration locale de la CLI Firebase (hors du dépôt) ; `firebase use`
+>   affiche alors ce projet pour ce dossier.
+>
+> N'utilisez pas `firebase use --add` : il écrit l'alias dans
+> `.firebaserc`, fichier versionné. Si vous l'avez fait, annulez avec
+> `git checkout -- .firebaserc` avant tout commit.
+>
+> Les autres valeurs réelles vivent aussi dans des fichiers locaux exclus de
+> Git : `.env.local` / `.env.recette.local` (front) et
+> `functions/.env.<ID_RECETTE>` (Cloud Functions), voir § 3.
+>
+> Sans `--project` ni `firebase use`, une commande vise `demo-uniflow`, qui
+> n'existe pas en ligne : un `firebase deploy` oublié échoue au lieu de
+> toucher un vrai projet.
 
 Dans ce document, `<ID_RECETTE>` désigne l'identifiant du projet de recette
 (par exemple `uniflow-recette`), et `<URL_RECETTE>` l'adresse où le front
@@ -45,10 +64,9 @@ sera servi.
    `hosting`**. Choisir où servir `dist/` pour la recette (Firebase Hosting
    après ajout d'une section `hosting`, ou un autre hébergement statique),
    puis fixer `<URL_RECETTE>`. Décision à prendre avant la recette.
-6. **Alias local** (facultatif, sans changer le défaut) :
-   `firebase use --add` puis choisir `<ID_RECETTE>` avec l'alias `recette`.
-   Vérifier ensuite que `firebase use` affiche toujours la production par
-   défaut, et continuer à passer `--project` explicitement.
+6. **Projet actif local** (facultatif) : `firebase use <ID_RECETTE>`
+   (enregistré hors du dépôt, voir l'encadré en tête). Continuer malgré
+   tout à passer `--project` explicitement.
 
 ## 2. Plan Firebase et alerte de budget
 
@@ -74,10 +92,10 @@ sera servi.
 
 - Les fichiers `.env.*` sont exclus de Git (`.gitignore` racine et
   `functions/`). Vérifier avec `git status` qu'aucun n'apparaît.
-- `create-test-user.js` (dossier parent du dépôt) prend **par défaut** les
-  identifiants de la **production** si `FIREBASE_PROJECT_ID` et
-  `FIREBASE_DATABASE_URL` ne sont pas définis : les définir
-  **explicitement** pour la recette.
+- Le script local `create-test-user.js` (hors dépôt, non publié) prend
+  **par défaut** les identifiants de la **production** si
+  `FIREBASE_PROJECT_ID` et `FIREBASE_DATABASE_URL` ne sont pas définis :
+  les définir **explicitement** pour la recette.
 - La clé de compte de service de recette (`FIREBASE_SERVICE_ACCOUNT`) ne doit
   jamais être enregistrée dans le dépôt. La générer pour l'opération, puis la
   supprimer (console Google Cloud > IAM > Comptes de service > Clés).
@@ -110,12 +128,16 @@ sera servi.
 
 ## 5. Déploiement (projet de recette ciblé explicitement)
 
+La CLI Firebase est une dépendance du projet (`npm run setup`) : sans
+installation globale, préfixez les commandes `firebase` par `npx`.
+
 ```bash
 # 0. Point de départ traçable
 git switch main && git pull --ff-only     # ou la branche à recetter
 git tag recette-AAAAMMJJ                    # repère pour le retour arrière
 
 # 1. Contrôles avant déploiement (émulateurs uniquement)
+npm run doctor
 npm ci && npm --prefix functions ci
 npx tsc -b && npm run build && npm run lint
 npm --prefix functions test
@@ -124,7 +146,7 @@ npm run test:session && npm run test:revocation && npm run test:audit
 
 # 2. Vérifier la cible
 firebase projects:list
-firebase use                                # doit rester la PRODUCTION par défaut
+firebase use                                # demo-uniflow, ou le projet choisi localement
 
 # 3. Règles puis fonctions, sur la RECETTE uniquement
 firebase deploy --only database  --project <ID_RECETTE>

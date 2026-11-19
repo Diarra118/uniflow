@@ -3,7 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "setup": "npm install && npm --prefix functions install",
     "dev": "vite",
     "demo": "node scripts/demo.mjs",
     "demo:reset": "node scripts/demo.mjs --reset",
@@ -40,6 +45,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "firebase-tools": "^15.30.2",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.6"
