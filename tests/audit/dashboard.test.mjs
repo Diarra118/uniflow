@@ -172,6 +172,12 @@ test('admin : les chiffres correspondent aux données de démo de SON universit�
   assert.equal(await signupCard.getAttribute('href'), '/app/inscriptions')
   await signupCard.getByText('À traiter').waitFor() // mise en avant écrite, pas seulement colorée
   assert.match(await signupCard.getAttribute('class'), /dash-highlight/)
+  // Captures de l'état « demandes à traiter », en clair puis en sombre.
+  for (const theme of ['clair', 'sombre']) {
+    await page.mouse.move(0, 0)
+    await page.screenshot({ path: fileURLToPath(new URL(`dashboard-admin-demandes-${theme}.png`, OUT)) })
+    await page.click('button[aria-label="Changer de thème"]')
+  }
   const enrolled = HZ.students.filter((s) => (s.enrollmentStatus ?? 'enrolled') === 'enrolled').length
   await page.locator('[data-stat="students"]').getByText(`${enrolled} inscrits`).waitFor()
 
@@ -260,7 +266,7 @@ test('étudiant : sa fiche résumée et le lien « Mon dossier »', async () => 
   await record.getByText(HZ.programs.find((p) => p.id === cls.programId).name).waitFor()
   await record.getByText(cls.name).waitFor()
   await record.getByText('Inscrit').waitFor()
-  assert.equal(await page.getByRole('link', { name: /Ouvrir mon dossier/ }).getAttribute('href'), '/app/mon-dossier')
+  assert.equal(await page.getByRole('link', { name: 'Voir le dossier complet' }).getAttribute('href'), '/app/mon-dossier')
   const programCourses = HZ.courses.filter((c) => c.programId === cls.programId)
   assert.equal(await page.locator('[data-testid="program-courses"] li').count(), programCourses.length)
   assert.equal(await page.locator('[data-stat]').count(), 0, 'aucune carte chiffrée de l’admin')

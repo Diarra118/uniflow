@@ -228,6 +228,9 @@ test('super_admin : redirigé vers l’espace plateforme, aucune section pédago
   const { ctx, page } = await newPage('superAdmin')
   await login(page, 'superAdmin')
   await page.waitForURL(`${BASE}/app/plateforme`, { timeout: 20000 })
+  // Comme pour les autres rôles : l'URL change avant le rendu de l'espace
+  // (navigation en transition), on attend donc l'application affichée.
+  await page.getByText('Audit superAdmin').first().waitFor()
   assert.deepEqual(await navLinks(page), ['Espace plateforme'])
   await checkFrench(page, 'espace plateforme')
   await page.goto(`${BASE}/app`)

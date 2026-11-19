@@ -74,7 +74,7 @@ export function StudentDashboard() {
           index={0}
           icon={IdCard}
           title="Ma fiche"
-          footer={hasRecord ? { to: '/app/mon-dossier', label: 'Ouvrir mon dossier' } : undefined}
+          footer={hasRecord ? { to: '/app/mon-dossier', label: 'Voir le dossier complet' } : undefined}
         >
           {!hasRecord ? (
             <PanelEmpty icon={GraduationCap} title="Aucune fiche liée">
