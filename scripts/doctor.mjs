@@ -48,13 +48,15 @@ if (installed) ok('Dépendances installées (interface, Cloud Functions, émulat
 else warn('Dépendances pas encore installées : lancez  npm run setup')
 
 // 4. Ports (indicatif)
-const isFree = (port) =>
+// Libre sur IPv4 ET IPv6 : Vite écoute sur « localhost », souvent ::1.
+const freeOn = (port, host) =>
   new Promise((resolve) => {
     const srv = net.createServer()
-    srv.once('error', () => resolve(false))
+    srv.once('error', (e) => resolve(e.code === 'EADDRNOTAVAIL' || e.code === 'EAFNOSUPPORT'))
     srv.once('listening', () => srv.close(() => resolve(true)))
-    srv.listen(port, '127.0.0.1')
+    srv.listen(port, host)
   })
+const isFree = async (port) => (await freeOn(port, '127.0.0.1')) && (await freeOn(port, '::1'))
 const busy = []
 for (const [port, what] of Object.entries(PORTS)) if (!(await isFree(Number(port)))) busy.push(`${port} (${what})`)
 if (busy.length === 0) ok('Ports de la démo libres')

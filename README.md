@@ -18,7 +18,8 @@ aucune connexion à un service payant.
 | Java | **17 ou plus** (21 conseillé) | https://adoptium.net/temurin/releases/?version=21 |
 
 Une connexion internet est nécessaire la première fois (dépendances et
-émulateurs, environ 500 Mo). Ensuite, la démo fonctionne aussi hors ligne.
+émulateurs ; prévoir environ 1 Go d'espace disque). Ensuite, la démo
+fonctionne aussi hors ligne.
 Pour récupérer le code sans Git : bouton **Code > Download ZIP** sur
 GitHub, puis ouvrez un terminal dans le dossier décompressé (étape 2).
 
