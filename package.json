@@ -21,7 +21,8 @@
     "test:e2e": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 tests/audit/e2e-accounts.test.mjs\"",
     "test:revocation": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/revocation.test.mjs\"",
     "test:session": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/session-changes.test.mjs\"",
-    "test:signup": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/signup.test.mjs\""
+    "test:signup": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/signup.test.mjs\"",
+    "test:dashboard": "npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/dashboard.test.mjs\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
