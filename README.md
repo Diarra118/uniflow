@@ -1,5 +1,33 @@
 # UniFlow — gestion universitaire multi-établissements
 
+## Version en ligne (démonstration)
+
+**Adresse : https://uniflow-demo-30e61.web.app**
+
+Projet Firebase réservé à la démonstration, avec des données fictives : deux
+universités (Horizon et Baobab), leurs filières, cours, classes,
+enseignants, étudiants et un parent. Les identifiants ne sont pas publiés
+dans ce dépôt public : ils sont communiqués séparément.
+
+| Fonctionne en ligne | Demande la version locale |
+|---|---|
+| Connexion des rôles admin d'université, enseignant, étudiant et parent, avec le tableau de bord de chacun | Création d'un compte depuis la page de connexion (auto-inscription) |
+| Listes et fiches des étudiants et des enseignants : création, modification, activation | Validation ou refus des demandes d'inscription |
+| Filières, cours et classes : création et modification | Création d'un accès de connexion depuis une fiche, avec l'envoi ou le renvoi de l'invitation |
+| Isolation des universités, appliquée par les règles de sécurité de la base | Déclencheurs serveur : pose automatique des droits (custom claims) et révocation des sessions d'un compte suspendu |
+| Mode sombre et affichage mobile | |
+
+**Pourquoi ?** La version en ligne utilise le plan gratuit Spark de
+Firebase, qui ne permet pas de déployer les **Cloud Functions**. Or les
+actions de la colonne de droite passent volontairement par ces fonctions
+serveur : le navigateur ne peut jamais attribuer un rôle ni créer un
+compte lui-même. En ligne, ces actions affichent « Disponible dans la
+version complète, à lancer en local : voir le README. » Les comptes de
+démonstration y ont été créés par un script local (`npm run seed:hosted`),
+qui fait ce que feraient les fonctions. La version locale ci-dessous
+contient tout, Cloud Functions comprises (émulées). Procédure de
+déploiement et retour arrière : [docs/RECETTE.md](docs/RECETTE.md#0-version-hébergée-de-démonstration-plan-spark-sans-cloud-functions).
+
 ## Lancer UniFlow (jury)
 
 UniFlow est une plateforme de gestion universitaire où chaque université

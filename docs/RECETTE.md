@@ -1,8 +1,15 @@
 # Recette UniFlow — déploiement sur un projet Firebase séparé
 
-Procédure **préparée, non exécutée**. Elle cible un projet Firebase de
-recette distinct de la production. Aucune valeur secrète ne figure ici.
+Les § 1 à 7 décrivent une procédure **préparée, non exécutée**, qui cible
+un projet Firebase de recette distinct de la production. Le § 0 décrit, lui,
+le déploiement **réalisé** de la version hébergée de démonstration, sans
+Cloud Functions. Aucune valeur secrète ne figure ici.
 
+> **État au 20/11/2026 :** version hébergée de démonstration en ligne sur
+> https://uniflow-demo-30e61.web.app, sur le plan gratuit Spark et sans
+> Cloud Functions (§ 0). La recette complète, avec les fonctions (§ 1 à 7),
+> reste à faire, pour les raisons ci-dessous.
+>
 > **État au 17/11/2026 : recette en ligne non réalisée, reste à faire.**
 > Elle exige le **plan Blaze** (paiement à l'usage, § 2) : Cloud Functions
 > de 2ᵉ génération et appels sortants pour les invitations. Le projet n'a
@@ -41,6 +48,95 @@ recette distinct de la production. Aucune valeur secrète ne figure ici.
 Dans ce document, `<ID_RECETTE>` désigne l'identifiant du projet de recette
 (par exemple `uniflow-recette`), et `<URL_RECETTE>` l'adresse où le front
 sera servi.
+
+---
+
+## 0. Version hébergée de démonstration (plan Spark, sans Cloud Functions)
+
+Déploiement **réalisé le 20/11/2026** sur le projet `uniflow-demo-30e61`,
+réservé à la démonstration (données fictives), sur le plan gratuit Spark.
+Adresse : **https://uniflow-demo-30e61.web.app**.
+
+Le plan Spark ne permet pas les Cloud Functions : seuls Hosting,
+Authentication et Realtime Database sont utilisés. Ce qui fonctionne en
+ligne, ce qui demande la version locale et pourquoi : voir README,
+« Version en ligne ».
+
+### 0.1 Ce que le dépôt prévoit pour ce mode
+
+| Élément | Rôle |
+|---|---|
+| `VITE_FUNCTIONS_ENABLED` (`src/core/config/features.ts`) | Vraie par défaut, donc en local. À `false`, l'interface masque tout ce qui appelle une fonction et affiche « Disponible dans la version complète, à lancer en local : voir le README. » Aucun appel de fonction n'est tenté. |
+| App Check (`src/core/firebase/config.ts`) | Facultatif : sans clé de site, il n'est pas initialisé. |
+| `firebase.json`, section `hosting` | `dist/`, toutes les routes vers `index.html`, cache long sur `/assets/**`, `no-cache` ailleurs, en-têtes de sécurité de base. Le `predeploy` lance `npm run build:hosted`. |
+| `.env.hosted` (non versionné, modèle : `.env.hosted.example`) | Configuration web **publique** du projet de démo, avec `VITE_FUNCTIONS_ENABLED=false` et une clé App Check vide. |
+| `npm run build:hosted` (`scripts/build-hosted.mjs`) | Build en mode `hosted`. Refuse un autre projet, ou une clé de `.env.local` absente de `.env.hosted` (pour éviter toute fuite de la configuration habituelle). Vérifie ensuite le bundle. |
+| `npm run seed:hosted` (`functions/scripts/seedHosted.ts`) | Fait avec l'Admin SDK ce que font les fonctions : comptes, profils actifs, claims `role` et `universityId`, fiches liées, index des universités, sur le jeu de la démo locale. Refuse tout autre projet que `uniflow-demo-30e61`. Mots de passe aléatoires écrits uniquement dans `docs/COMPTES-EN-LIGNE.local.md` (non versionné). |
+| `npm run test:en-ligne` (`tests/audit/en-ligne.test.mjs`) | Vérification Playwright de l'adresse en ligne (§ 0.3). |
+
+La clé du compte de service reste **hors du dépôt**. Elle est transmise
+par la variable `GOOGLE_APPLICATION_CREDENTIALS`, jamais copiée ni
+affichée. `.firebaserc` ne contient toujours que `demo-uniflow` : chaque
+commande précise `--project uniflow-demo-30e61`.
+
+### 0.2 Procédure suivie (Git Bash, racine du dépôt)
+
+```bash
+# Clé hors du dépôt, pour la session de terminal uniquement
+export GOOGLE_APPLICATION_CREDENTIALS='C:\Users\<vous>\cles\uniflow-demo.json'
+
+# 1. Configuration web publique du projet de démo, recopiée dans .env.hosted
+npx firebase apps:list --project uniflow-demo-30e61
+npx firebase apps:sdkconfig web <APP_ID> --project uniflow-demo-30e61
+
+# 2. Contrôles locaux : suites sur émulateurs (voir README « Développement »)
+
+# 3. Règles de la base et site (le predeploy construit dist/ avec .env.hosted)
+npx firebase deploy --only database,hosting --project uniflow-demo-30e61
+
+# 4. Données de démonstration et comptes (relançable : remet les données
+#    de démo à zéro et donne de nouveaux mots de passe)
+npm run seed:hosted
+
+# 5. Vérification en ligne
+npm run test:en-ligne
+```
+
+Avant le déploiement, la base de démo était vide, avec les règles
+`{".read": false, ".write": false}`. Le fournisseur E-mail/Mot de passe
+était déjà activé, et les domaines `uniflow-demo-30e61.web.app` et
+`uniflow-demo-30e61.firebaseapp.com` déjà autorisés.
+
+### 0.3 Vérifications réalisées
+
+- En-têtes en production (`curl -sI`) : `/`, `/login` et `/app/programs`
+  répondent 200 (index.html) avec `Cache-Control: no-cache`.
+  `/assets/*.js` répond avec `public, max-age=31536000, immutable`.
+  `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
+  `Permissions-Policy` et HSTS sont présents.
+- `npm run test:en-ligne` : **16/16**. Connexion des 9 comptes, chacun
+  sur le bon tableau de bord. Chiffres de l'admin Horizon. Isolation :
+  l'admin Baobab ne voit aucune donnée d'Horizon dans l'interface, et sa
+  lecture directe de `universities/universite-horizon/*` est refusée (401).
+  Filière de test créée, modifiée puis supprimée. Message affiché à la
+  place des fonctions désactivées (connexion, inscription, demandes,
+  fiche, formulaire). Rechargement d'une route interne. Mode sombre et
+  390 px. Console sans erreur ni lecture refusée, aucun appel de fonction.
+  Captures : `tests/audit/out/en-ligne/` (non versionné).
+
+### 0.4 Retour arrière
+
+| Quoi | Commande ou action |
+|---|---|
+| Site : version précédente | Console Firebase > Hosting > Historique des versions > « Restaurer » sur la version voulue. |
+| Site : mise hors ligne | `npx firebase hosting:disable --project uniflow-demo-30e61` (un nouveau `deploy` le remet en ligne). |
+| Règles de la base | Console > Realtime Database > Règles : recoller `{"rules": {".read": false, ".write": false}}` puis Publier. Autre possibilité : `npx firebase deploy --only database --project uniflow-demo-30e61` depuis une version antérieure du dépôt. |
+| Mots de passe divulgués | `npm run seed:hosted` : nouveaux mots de passe pour tous les comptes de démo, données de démo remises à zéro. |
+| Données et comptes | Console > Realtime Database : supprimer `universities`, `users` et `platform`. Console > Authentication : supprimer les comptes `*.test`. |
+| Code | La version locale n'est pas modifiée par ce mode (`VITE_FUNCTIONS_ENABLED` vaut vrai par défaut). Revenir au tag précédent : `git checkout <tag>`. |
+
+Ce mode ne touche ni aux Cloud Functions, ni à `.firebaserc`, ni à aucun
+autre projet Firebase.
 
 ---
 
