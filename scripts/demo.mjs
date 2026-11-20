@@ -70,7 +70,7 @@ if (!run('npm --prefix functions run build') || !run('npm --prefix functions run
 // 2. Émulateurs (Java requis : scripts/with-java.mjs le trouve)
 log('Démarrage des émulateurs (Auth, Database, Functions)…')
 const emulators = spawn(
-  `node scripts/with-java.mjs firebase emulators:start --project ${PROJECT_ID} --import ${DATA_DIR} --export-on-exit ${DATA_DIR}`,
+  `node scripts/with-java.mjs firebase emulators:start --only auth,database,functions --project ${PROJECT_ID} --import ${DATA_DIR} --export-on-exit ${DATA_DIR}`,
   { cwd: ROOT, shell: true, stdio: ['inherit', 'pipe', 'inherit'] }
 )
 let vite = null
