@@ -29,6 +29,7 @@
     "test:revocation": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/revocation.test.mjs\"",
     "test:session": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/session-changes.test.mjs\"",
     "test:signup": "npm --prefix functions run build && npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database,functions --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/signup.test.mjs\"",
+    "test:en-ligne": "npm --prefix functions run build:test && node --test --test-concurrency=1 --test-timeout=180000 tests/audit/en-ligne.test.mjs",
     "test:dashboard": "npm --prefix functions run build:test && node scripts/with-java.mjs firebase emulators:exec --only auth,database --project demo-uniflow \"node --test --test-concurrency=1 --test-timeout=180000 tests/audit/dashboard.test.mjs\""
   },
   "dependencies": {
