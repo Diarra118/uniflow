@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { BrandMark } from './BrandMark'
 
-const HIGHLIGHTS = ['Étudiants & inscriptions', 'Notes & examens', 'Paiements & documents']
+const HIGHLIGHTS = ['Étudiants & inscriptions', 'Enseignants & cours', 'Filières & classes']
 
 /** Mise en page des pages publiques d'accès (connexion, inscription) :
  * panneau de marque à gauche (grand écran), formulaire à droite. */
@@ -15,8 +15,8 @@ export function AuthLayout({ children, wide = false }: { children: ReactNode; wi
 
         <div>
           <p className="font-display max-w-md text-3xl font-medium leading-snug">
-            Un registre unique, piloté par l'IA, pour accompagner chaque
-            établissement du premier semestre au diplôme.
+            Un registre unique et sécurisé pour accompagner chaque
+            établissement, du premier semestre au diplôme.
           </p>
           <div className="mt-8 space-y-2">
             {HIGHLIGHTS.map((line, i) => (
