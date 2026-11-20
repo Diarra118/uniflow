@@ -16,6 +16,7 @@ import { useAuth } from '@/core/firebase/AuthContext'
 import { useCan } from '@/core/rbac/useCan'
 import { ROLE_LABELS } from '@/shared/config/roleLabels'
 import { usePendingSignupCount } from '@/modules/signup/useSignupRequests'
+import { FUNCTIONS_ENABLED } from '@/core/config/features'
 
 // Aperçu visuel de la feuille de route — aucun lien, aucune donnée : ces
 // modules seront implémentés phase par phase (voir architecture §10).
@@ -35,7 +36,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const canReadPrograms = useCan('programs', 'read')
   const canReadCourses = useCan('courses', 'read')
   const canReadClasses = useCan('classes', 'read')
-  const canReadSignupRequests = useCan('signupRequests', 'read')
+  // Version hébergée sans Cloud Functions : pas de page des demandes.
+  const canReadSignupRequests = useCan('signupRequests', 'read') && FUNCTIONS_ENABLED
   const pendingSignups = usePendingSignupCount(
     canReadSignupRequests ? (appUser?.universityId ?? null) : null
   )

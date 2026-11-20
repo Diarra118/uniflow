@@ -4,7 +4,9 @@ import { AppShell } from '@/shared/components/AppShell'
 import { ProtectedRoute } from '@/shared/components/ProtectedRoute'
 import { LoginPage } from '@/pages/public/LoginPage'
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage'
-import { SignupPage } from '@/pages/public/SignupPage'
+import { SignupPage, SignupUnavailablePage } from '@/pages/public/SignupPage'
+import { FUNCTIONS_ENABLED } from '@/core/config/features'
+import { LocalOnlyPanel } from '@/shared/components/LocalOnlyNotice'
 import { DashboardPage } from '@/pages/app/DashboardPage'
 import { PlatformHomePage } from '@/pages/app/PlatformHomePage'
 import { StudentsPage } from '@/modules/students/StudentsPage'
@@ -44,7 +46,10 @@ function App() {
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
-          <Route path="/inscription" element={<SignupPage />} />
+          <Route
+            path="/inscription"
+            element={FUNCTIONS_ENABLED ? <SignupPage /> : <SignupUnavailablePage />}
+          />
 
           {/* Routes privées */}
           <Route
@@ -124,7 +129,11 @@ function App() {
               path="inscriptions"
               element={
                 <ProtectedRoute requiredPermission={{ resource: 'signupRequests', action: 'read' }}>
-                  <SignupRequestsPage />
+                  {FUNCTIONS_ENABLED ? (
+                    <SignupRequestsPage />
+                  ) : (
+                    <LocalOnlyPanel title="Demandes d'inscription" />
+                  )}
                 </ProtectedRoute>
               }
             />

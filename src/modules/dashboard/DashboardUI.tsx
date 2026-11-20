@@ -7,6 +7,7 @@ import { ENROLLMENT_STATUS_TONE } from '@/modules/students/schema'
 import { countLabel } from '@/shared/utils/plural'
 import { ENROLLMENT_ORDER } from './stats'
 import { formatPercent, frenchToday } from './format'
+import { LocalOnlyNotice } from '@/shared/components/LocalOnlyNotice'
 
 /** Délai d'apparition échelonné (désactivé si l'utilisateur réduit les animations). */
 const reveal = (i: number) => ({ className: 'dash-reveal', style: { animationDelay: `${i * 40}ms` } })
@@ -114,6 +115,37 @@ export function StatCard({
   ) : (
     <div data-stat={id} className={`${cls} ${className}`} style={style}>
       {body}
+    </div>
+  )
+}
+
+/** Carte d'une fonctionnalité réservée à la version locale (Cloud Functions
+ * absentes de la version hébergée) : ni chiffre ni lien, le message prévu. */
+export function LocalOnlyStatCard({
+  id,
+  index = 0,
+  icon: Icon,
+  label,
+}: {
+  id: string
+  index?: number
+  icon: LucideIcon
+  label: string
+}) {
+  const { className, style } = reveal(index)
+  return (
+    <div
+      data-stat={id}
+      className={`flex items-start gap-4 rounded-box border border-base-300 bg-base-100 p-4 ${className}`}
+      style={style}
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-base-200 text-base-content/60">
+        <Icon size={19} aria-hidden="true" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-base-content/75">{label}</p>
+        <LocalOnlyNotice className="mt-1 text-xs" />
+      </div>
     </div>
   )
 }

@@ -49,12 +49,15 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 /**
  * App Check : exigé par les callables de gestion des accès
  * (enforceAppCheck). La clé de site reCAPTCHA Enterprise est publique.
- * Sans elle, ces appels sont refusés ; le reste de l'application fonctionne.
+ * Facultatif : sans clé de site (valeur absente ou vide), App Check n'est
+ * pas initialisé. C'est le cas de la version hébergée de démonstration
+ * (.env.hosted), qui n'appelle aucune fonction. Avec des fonctions mais sans
+ * clé, ces appels sont refusés ; le reste de l'application fonctionne.
  * En local, VITE_FIREBASE_APPCHECK_DEBUG=true active le jeton de débogage
  * (à enregistrer dans la console : App Check > Applications > Jetons de débogage).
  * Désactivé en mode émulateurs (l'émulateur Functions ne l'exige pas).
  */
-const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY
+const appCheckSiteKey = (import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY ?? '').trim()
 if (appCheckSiteKey && !USE_EMULATORS) {
   if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG === 'true') {
     ;(globalThis as { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean }).FIREBASE_APPCHECK_DEBUG_TOKEN = true

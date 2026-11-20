@@ -34,6 +34,7 @@ import type {
   StudentProfile,
   TeacherProfile,
 } from '@/core/types'
+import { FUNCTIONS_ENABLED } from '@/core/config/features'
 import { useTenantRows } from './useDashboardData'
 import {
   attentionItems,
@@ -47,6 +48,7 @@ import { formatShortDate, initials } from './format'
 import {
   ComingSoonCard,
   DashboardHeader,
+  LocalOnlyStatCard,
   Panel,
   PanelEmpty,
   PanelError,
@@ -74,7 +76,8 @@ export function AdminDashboard() {
   const programs = useTenantRows<Program>(uid, 'programs')
   const courses = useTenantRows<CourseUnit>(uid, 'courses')
   const classes = useTenantRows<ClassGroup>(uid, 'classes')
-  const signups = useTenantRows<SignupRequest>(uid, 'signupRequests')
+  // Version hébergée sans Cloud Functions : demandes non traitables, non lues.
+  const signups = useTenantRows<SignupRequest>(FUNCTIONS_ENABLED ? uid : null, 'signupRequests')
 
   const canCreateStudent = useCan('students', 'create')
   const canCreateTeacher = useCan('teachers', 'create')
@@ -165,16 +168,20 @@ export function AdminDashboard() {
           hint={cl && countLabel(activeClasses, 'active', 'actives')}
           to="/app/classes"
         />
-        <StatCard
-          id="signups"
-          index={5}
-          icon={UserPlus}
-          label="Demandes d'inscription"
-          value={pending}
-          hint={pending === null ? undefined : pending ? 'En attente de validation' : 'Aucune demande en attente'}
-          to="/app/inscriptions"
-          highlight={pending ? <StatusBadge tone="warning">À traiter</StatusBadge> : undefined}
-        />
+        {FUNCTIONS_ENABLED ? (
+          <StatCard
+            id="signups"
+            index={5}
+            icon={UserPlus}
+            label="Demandes d'inscription"
+            value={pending}
+            hint={pending === null ? undefined : pending ? 'En attente de validation' : 'Aucune demande en attente'}
+            to="/app/inscriptions"
+            highlight={pending ? <StatusBadge tone="warning">À traiter</StatusBadge> : undefined}
+          />
+        ) : (
+          <LocalOnlyStatCard id="signups" index={5} icon={UserPlus} label="Demandes d'inscription" />
+        )}
       </StatGrid>
 
       <div className="mt-4 grid grid-flow-row-dense grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

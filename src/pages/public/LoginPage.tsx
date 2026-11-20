@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { AuthLayout } from '@/shared/components/AuthLayout'
+import { LocalOnlyNotice } from '@/shared/components/LocalOnlyNotice'
+import { FUNCTIONS_ENABLED } from '@/core/config/features'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 
 const loginSchema = z.object({
@@ -201,12 +203,16 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-base-content/70">
-            Pas encore de compte ?{' '}
-            <Link to="/inscription" className="font-medium text-primary hover:underline">
-              Créer un compte
-            </Link>
-          </p>
+          {FUNCTIONS_ENABLED ? (
+            <p className="mt-6 text-center text-sm text-base-content/70">
+              Pas encore de compte ?{' '}
+              <Link to="/inscription" className="font-medium text-primary hover:underline">
+                Créer un compte
+              </Link>
+            </p>
+          ) : (
+            <LocalOnlyNotice className="mt-6 justify-center text-xs" />
+          )}
     </AuthLayout>
   )
 }

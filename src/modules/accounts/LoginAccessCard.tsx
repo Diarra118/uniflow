@@ -4,9 +4,12 @@ import { useCreateLoginAccess, useResendAccountInvite } from './useCreateLoginAc
 import { AccountInvitationDialog } from './AccountInvitationDialog'
 import { StatusBadge } from '@/shared/components/StatusBadge'
 import { activeTone } from '@/shared/utils/statusTone'
+import { FUNCTIONS_ENABLED } from '@/core/config/features'
+import { LocalOnlyNotice } from '@/shared/components/LocalOnlyNotice'
 
 /** État du compte de connexion d'une fiche, création de l'accès et renvoi
- * de l'invitation. */
+ * de l'invitation. Version hébergée (sans Cloud Functions) : l'état reste
+ * affiché, les deux actions sont remplacées par le message prévu. */
 export function LoginAccessCard({
   recordType,
   recordId,
@@ -40,7 +43,7 @@ export function LoginAccessCard({
           </p>
         </div>
 
-        {canManage && !uid && (
+        {canManage && FUNCTIONS_ENABLED && !uid && (
           <button
             type="button"
             className="btn btn-outline btn-sm gap-2"
@@ -56,7 +59,7 @@ export function LoginAccessCard({
           </button>
         )}
 
-        {canManage && uid && (
+        {canManage && FUNCTIONS_ENABLED && uid && (
           <button
             type="button"
             className="btn btn-outline btn-sm gap-2"
@@ -73,6 +76,7 @@ export function LoginAccessCard({
         )}
       </div>
 
+      {canManage && !FUNCTIONS_ENABLED && <LocalOnlyNotice className="mt-3" />}
       {access.error && <p className="mt-3 text-sm text-error">{access.error}</p>}
       {invite.error && <p className="mt-3 text-sm text-error">{invite.error}</p>}
       {invite.sentTo && (

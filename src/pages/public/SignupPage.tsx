@@ -5,6 +5,7 @@ import { useAuth } from '@/core/firebase/AuthContext'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { listSignupUniversities, type SignupUniversity } from '@/core/firebase/functions'
 import { AuthLayout } from '@/shared/components/AuthLayout'
+import { LocalOnlyNotice } from '@/shared/components/LocalOnlyNotice'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import {
   SIGNUP_ROLES,
@@ -205,6 +206,23 @@ export function SignupPage() {
         Déjà un compte ?{' '}
         <Link to="/login" className="font-medium text-primary hover:underline">
           Se connecter
+        </Link>
+      </p>
+    </AuthLayout>
+  )
+}
+
+/** Version hébergée (sans Cloud Functions) : l'auto-inscription passe par
+ * des fonctions serveur, la page affiche seulement le message prévu. */
+export function SignupUnavailablePage() {
+  useDocumentTitle('Créer un compte')
+  return (
+    <AuthLayout>
+      <h1 className="font-display text-2xl font-semibold">Créer un compte</h1>
+      <LocalOnlyNotice className="mt-3" />
+      <p className="mt-6 text-sm text-base-content/70">
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Retour à la connexion
         </Link>
       </p>
     </AuthLayout>
