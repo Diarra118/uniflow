@@ -36,7 +36,7 @@ propre à chaque rôle. Elle fonctionne **entièrement en local, sur les
 émulateurs Firebase** : aucun compte Firebase, aucune clé à renseigner,
 aucune connexion à un service payant.
 
-**Vidéo de démonstration** : [LIEN VIDÉO]
+**Vidéo de démonstration** : [https://youtu.be/clEUiUahWw0]
 
 ### Prérequis
 
