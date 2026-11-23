@@ -505,11 +505,17 @@ Points identifiés lors des revues, non traités à ce stade :
    À restreindre aux étudiants de ses cours ou classes (index
    `teacherStudents/{teacherUid}/{studentId}` maintenu par Cloud Function,
    règle de lecture par fiche) et/ou à une vue réduite sans email.
-2. **Unification de `studentId` (= id de fiche).** `enrollments` utilise
-   l'id de fiche, tandis que `grades`, `payments` et `parentLinks`
-   comparent `studentId` à l'uid Auth. Avant de livrer ces modules :
-   `studentId` = id de fiche partout, et règles fondées sur
-   `students/{studentId}/uid === auth.uid` (comme `enrollments`).
+2. **Unification de `studentId` (= id de fiche) : en partie faite.**
+   Convention retenue : `studentId` = id de la fiche étudiant, et accès de
+   l'étudiant par `students/{studentId}/uid === auth.uid`.
+   - **Faite** (v1.4) pour `enrollments` et `grades`. Les `exams` ne
+     portent pas de `studentId` : l'étudiant y accède par la filière de sa
+     fiche (`users/{uid}/linkedRecordId`).
+   - **Reste à unifier**, sans changement dans ce lot : `payments` (règle
+     étudiant encore sur l'uid Auth), `documents` (`ownerUid`,
+     `ownerStudentId`), `parentLinks` (clé `{studentId}`, à aligner sur
+     l'id de fiche avec la reprise des liens existants) et `aiInsights`
+     (clé `{studentId}`, lecture admin et enseignant seulement).
 3. **Recomptage des quotas.** `universities/{id}/usage/{role}Accounts` part
    de 0 : les comptes créés avant ce mécanisme ne sont pas comptés, et une
    suppression de compte ne décrémente rien. Prévoir un script ou une

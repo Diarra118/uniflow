@@ -104,7 +104,7 @@ const SEED = {
         requester1: { uid: 'requester1', email: 'r1@a.edu', firstName: 'Rita', lastName: 'Un', requestedRole: 'student', status: 'pending', createdAt: 1 },
       },
       parentLinks: {
-        parentA: { studentA: { authorized: true }, studentA2: { authorized: false } },
+        parentA: { studentA: { authorized: true }, studentA2: { authorized: false }, s1: { authorized: true }, s2: { authorized: false } },
         parentA2: { studentA2: { authorized: true } },
       },
       students: {
@@ -137,8 +137,9 @@ const SEED = {
       indexes: { i1: { value: 1 } },
       enrollments: { e1: { studentId: 's1' }, e2: { studentId: 's2' } },
       grades: {
-        g1: { studentId: 'studentA', value: 15, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
-        g2: { studentId: 'studentA2', value: 12, courseId: 'c2', createdBy: 'adminA', updatedBy: 'adminA' },
+        // studentId = id de la fiche étudiant (s1 → uid studentA, s2 → studentA2).
+        g1: { studentId: 's1', value: 15, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
+        g2: { studentId: 's2', value: 12, courseId: 'c2', createdBy: 'adminA', updatedBy: 'adminA' },
       },
       payments: { pay1: { studentId: 'studentA', amount: 100 }, pay2: { studentId: 'studentA2', amount: 100 } },
       documents: {
@@ -400,6 +401,23 @@ describe('données par élève', () => {
     await assertFails(write('studentA', `${A}/grades/g1/value`, 20))
     await assertFails(read('adminA', `${A}/grades`)) // pas de lecture au niveau liste
     await assertFails(read('adminB', `${A}/grades/g1`))
+  })
+
+  test('18 bis. grades : studentId = id de la fiche, accès étudiant par students/{studentId}/uid', async () => {
+    await asAdminSdk((root) => root.ref(`${A}/grades`).update({
+      // Ancien sens (uid Auth dans studentId) : n'ouvre plus rien à l'étudiant.
+      legacy: { studentId: 'studentA', value: 9, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
+      // Fiche sans compte : aucun étudiant ne la lit.
+      g3: { studentId: 's3', value: 11, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
+    }))
+    await assertSucceeds(read('studentA', `${A}/grades/g1`)) // s1.uid === studentA
+    await assertSucceeds(read('studentA2', `${A}/grades/g2`)) // s2.uid === studentA2
+    await assertFails(read('studentA', `${A}/grades/legacy`))
+    await assertFails(read('studentA', `${A}/grades/g3`))
+    await assertFails(read('studentA2', `${A}/grades/g1`))
+    // Fiche supprimée : le lien disparaît, l'accès aussi.
+    await asAdminSdk((root) => root.ref(`${A}/students/s1`).remove())
+    await assertFails(read('studentA', `${A}/grades/g1`))
   })
 
   test('19. payments', async () => {

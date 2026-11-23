@@ -53,7 +53,10 @@ function tenant(t) {
   return {
     meta: { name: `Université ${t}`, plan: 'standard', status: 'active', ownerUid: `admin${t}` },
     parentLinks: {
-      [`parent${t}`]: { [`student${t}`]: { authorized: true }, [`student${t}2`]: { authorized: false } },
+      [`parent${t}`]: {
+        [`student${t}`]: { authorized: true }, [`student${t}2`]: { authorized: false },
+        [`${s}1`]: { authorized: true }, [`${s}2`]: { authorized: false },
+      },
       parentOther: { [`student${t}2`]: { authorized: true } },
     },
     students: {
@@ -77,8 +80,9 @@ function tenant(t) {
     exams: { x1: { title: 'Partiel', ...byAdmin(t, 'c1') }, x2: { title: 'Autre', ...byAdmin(t, 'c2') } },
     enrollments: { en1: { studentId: `${s}1` }, en2: { studentId: `${s}2` } },
     grades: {
-      g1: { studentId: `student${t}`, value: 15, ...byAdmin(t, 'c1') },
-      g2: { studentId: `student${t}2`, value: 9, ...byAdmin(t, 'c1') },
+      // studentId = id de la fiche (a1 → uid studentA, a2 → studentA2).
+      g1: { studentId: `${s}1`, value: 15, ...byAdmin(t, 'c1') },
+      g2: { studentId: `${s}2`, value: 9, ...byAdmin(t, 'c1') },
       g3: { studentId: 'sansLien', value: 11, ...byAdmin(t, 'c2') },
     },
     payments: { pay1: { studentId: `student${t}`, amount: 100 }, pay2: { studentId: `student${t}2`, amount: 50 } },
@@ -237,7 +241,7 @@ describe('5d. parent', () => {
   })
   test('lien révoqué (authorized:false) → accès coupé', async () => {
     await env.withSecurityRulesDisabled((ctx) =>
-      ctx.database().ref('universities/A/parentLinks/parentA/studentA/authorized').set(false)
+      ctx.database().ref('universities/A/parentLinks/parentA/a1/authorized').set(false)
     )
     await assertFails(R('parentA', 'universities/A/grades/g1'))
   })
