@@ -429,9 +429,12 @@ describe('données par élève', () => {
   test('18. grades', async () => {
     await assertSucceeds(read('studentA', `${A}/grades/${G1}`))
     await assertFails(read('studentA', `${A}/grades/${G2}`))
-    await assertSucceeds(read('parentA', `${A}/grades/${G1}`))
-    await assertFails(read('parentA', `${A}/grades/${G2}`)) // lien non autorisé
-    await assertSucceeds(read('teacherA', `${A}/grades/${G2}`))
+    // Parent : aucun accès aux notes dans ce lot, même avec un lien autorisé.
+    await assertFails(read('parentA', `${A}/grades/${G1}`))
+    await assertFails(read('parentA', `${A}/grades/${G2}`))
+    // Enseignant : notes de SES cours seulement (G2 est sur c2, cours de teacherA2).
+    await assertSucceeds(read('teacherA', `${A}/grades/${G1}`))
+    await assertFails(read('teacherA', `${A}/grades/${G2}`))
     await assertSucceeds(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 10)))
     await assertFails(write('studentA', `${A}/grades/${G1}/value`, 20))
     await assertFails(read('adminA', `${A}/grades`)) // pas de lecture au niveau liste
@@ -661,6 +664,119 @@ describe('21 bis. enseignant : écritures limitées à ses cours', () => {
     await assertFails(patch('teacherA', `${A}/elearning/el2`, { courseId: 'c1', updatedBy: 'teacherA' }))
   })
 })
+
+// ---------------------------------------------------------------------
+// 21 ter. Notes et examens : droits par rôle (v1.4)
+// ---------------------------------------------------------------------
+
+/** Lecture par requête (orderByChild + equalTo), seule forme de liste ouverte. */
+const query = (who: Who, path: string, child: string, value: string) =>
+  db(who).ref(path).orderByChild(child).equalTo(value).get()
+
+describe('21 ter. notes et examens : droits par rôle', () => {
+  test('enseignant : lit les notes et les examens de SES cours seulement', async () => {
+    await assertSucceeds(read('teacherA', `${A}/grades/${G1}`))
+    await assertSucceeds(read('teacherA', `${A}/exams/x1`))
+    await assertFails(read('teacherA', `${A}/grades/${G2}`)) // cours c2 : teacherA2
+    await assertFails(read('teacherA', `${A}/exams/x2`))
+    await assertFails(read('teacherA', `${A}/exams/x3`)) // cours sans responsable
+    await assertSucceeds(read('teacherA2', `${A}/grades/${G2}`))
+    await assertSucceeds(read('teacherA2', `${A}/exams/x2`))
+    await assertFails(read('teacherA2', `${A}/grades/${G1}`))
+    await assertFails(read('teacherNoRecord', `${A}/grades/${G1}`))
+    await assertFails(read('teacherNoRecord', `${A}/exams/x1`))
+  })
+
+  test('enseignant : ne note que les étudiants de la filière du cours', async () => {
+    // s3 est en p1 (filière de c1), s4 en p2.
+    await assertSucceeds(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 11)))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x1', 's4')}`, grade('teacherA', 'x1', 's4', 11)))
+    // Fiche passée dans une autre filière : sa note n'est plus modifiable par l'enseignant.
+    await asAdminSdk((root) => root.ref(`${A}/students/s1/programId`).set('p2'))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { value: 12, updatedBy: 'teacherA' }))
+    // Cours sans filière : aucune note possible pour l'enseignant.
+    await asAdminSdk((root) => root.ref(`${A}/courses/c1/programId`).remove())
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 13)))
+    // L'admin, lui, peut corriger.
+    await assertSucceeds(patch('adminA', `${A}/grades/${G1}`, { value: 12, updatedBy: 'adminA' }))
+  })
+
+  test('étudiant : ses notes et les examens des cours de sa filière, aucune écriture', async () => {
+    await asAdminSdk((root) => root.ref(`${A}`).update({
+      'programs/p2': { name: 'Droit' },
+      'courses/c4': { name: 'Droit civil', programId: 'p2' },
+      'exams/x4': exam('adminA', 'c4', { title: 'Droit civil' }),
+    }))
+    await assertSucceeds(read('studentA', `${A}/grades/${G1}`))
+    await assertFails(read('studentA', `${A}/grades/${G2}`)) // note de studentA2
+    await assertSucceeds(read('studentA', `${A}/exams/x1`)) // c1 : filière p1
+    await assertSucceeds(read('studentA', `${A}/exams/x2`))
+    await assertFails(read('studentA', `${A}/exams/x4`)) // c4 : filière p2
+    // Aucune écriture : note, examen, suppression.
+    await assertFails(patch('studentA', `${A}/grades/${G1}`, { value: 20, updatedBy: 'studentA' }))
+    await assertFails(write('studentA', `${A}/grades/${gradeId('x1', 's1')}`, grade('studentA', 'x1', 's1', 20)))
+    await assertFails(del('studentA', `${A}/grades/${G1}`))
+    await assertFails(write('studentA', `${A}/exams/n1`, exam('studentA', 'c1')))
+    await assertFails(patch('studentA', `${A}/exams/x1`, { title: 'x', updatedBy: 'studentA' }))
+    // Fiche liée absente ou appartenant à un autre compte : plus d'examens.
+    await asAdminSdk((root) => root.ref('users/studentA/linkedRecordId').set('s2'))
+    await assertFails(read('studentA', `${A}/exams/x1`))
+    await asAdminSdk((root) => root.ref('users/studentA/linkedRecordId').remove())
+    await assertFails(read('studentA', `${A}/exams/x1`))
+  })
+
+  test('admin : lit et corrige tout dans son université ; l’université B ne lit rien de A', async () => {
+    for (const path of [`${A}/grades/${G1}`, `${A}/grades/${G2}`, `${A}/exams/x1`, `${A}/exams/x2`, `${A}/exams`]) {
+      await assertSucceeds(read('adminA', path))
+      await assertFails(read('adminB', path))
+    }
+    await assertSucceeds(patch('adminA', `${A}/grades/${G2}`, { value: 30, comment: 'Correction', updatedBy: 'adminA' }))
+    await assertFails(patch('adminB', `${A}/grades/${G2}`, { value: 31, updatedBy: 'adminB' }))
+    await assertFails(write('adminB', `${A}/exams/n1`, exam('adminB', 'c1')))
+    await assertFails(query('adminB', `${A}/grades`, 'examId', 'x1'))
+    await assertFails(query('adminB', `${A}/exams`, 'courseId', 'c1'))
+  })
+
+  test('parent et super admin : aucun accès aux notes ni aux examens', async () => {
+    for (const who of ['parentA', 'superAdmin'] as Who[]) {
+      await assertFails(read(who, `${A}/grades/${G1}`))
+      await assertFails(read(who, `${A}/exams/x1`))
+      await assertFails(read(who, `${A}/exams`))
+      await assertFails(query(who, `${A}/grades`, 'studentId', 's1'))
+      await assertFails(query(who, `${A}/grades`, 'examId', 'x1'))
+      await assertFails(query(who, `${A}/exams`, 'courseId', 'c1'))
+      await assertFails(write(who, `${A}/grades/${gradeId('x1', 's3')}`, grade(IDS[who].uid, 'x1', 's3', 10)))
+      await assertFails(write(who, `${A}/exams/n1`, exam(IDS[who].uid, 'c1')))
+    }
+  })
+
+  test('listes : uniquement par requête, et seulement sur ce que le rôle peut lire', async () => {
+    // Liste complète des notes : jamais.
+    for (const who of ['adminA', 'teacherA', 'studentA'] as Who[]) await assertFails(read(who, `${A}/grades`))
+    // Notes d'un examen.
+    const x1 = await assertSucceeds(query('adminA', `${A}/grades`, 'examId', 'x1'))
+    assert.deepEqual(Object.keys(x1.val()), [G1])
+    await assertSucceeds(query('adminA', `${A}/grades`, 'examId', 'x2'))
+    await assertSucceeds(query('teacherA', `${A}/grades`, 'examId', 'x1'))
+    await assertFails(query('teacherA', `${A}/grades`, 'examId', 'x2'))
+    await assertFails(query('studentA', `${A}/grades`, 'examId', 'x1'))
+    // Notes d'une fiche : l'étudiant, pour SA fiche seulement.
+    const mine = await assertSucceeds(query('studentA', `${A}/grades`, 'studentId', 's1'))
+    assert.deepEqual(Object.keys(mine.val()), [G1])
+    await assertFails(query('studentA', `${A}/grades`, 'studentId', 's2'))
+    await assertFails(query('teacherA', `${A}/grades`, 'studentId', 's1'))
+    // Examens : liste complète pour l'admin, par cours pour les autres.
+    await asAdminSdk((root) => root.ref(`${A}/courses/c4`).set({ name: 'Droit civil', programId: 'p2' }))
+    await assertSucceeds(read('adminA', `${A}/exams`))
+    await assertFails(read('teacherA', `${A}/exams`))
+    await assertFails(read('studentA', `${A}/exams`))
+    await assertSucceeds(query('teacherA', `${A}/exams`, 'courseId', 'c1'))
+    await assertFails(query('teacherA', `${A}/exams`, 'courseId', 'c2'))
+    await assertSucceeds(query('studentA', `${A}/exams`, 'courseId', 'c1'))
+    await assertFails(query('studentA', `${A}/exams`, 'courseId', 'c4'))
+  })
+})
+
 
 // ---------------------------------------------------------------------
 // 22-23. aiInsights / indexes / platform

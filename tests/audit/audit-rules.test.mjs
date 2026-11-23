@@ -237,13 +237,14 @@ describe('5c. super_admin_plateforme', () => {
 describe('5d. parent', () => {
   test('lit ses liens et les données de l’enfant autorisé', async () => {
     for (const p of [
-      'universities/A/parentLinks/parentA', 'universities/A/grades/x1_a1', 'universities/A/payments/pay1',
+      'universities/A/parentLinks/parentA', 'universities/A/payments/pay1',
       'universities/A/documents/d1', 'universities/A/notifications/n_parentA', 'universities/A/meta',
     ]) await assertSucceeds(R('parentA', p)).catch((e) => assert.fail(`parentA devrait lire ${p} : ${e.message}`))
   })
   test('refusé : enfant non autorisé, sans lien, autres parents, fiches, autre tenant', async () => {
     for (const p of [
-      'universities/A/grades/x1_a2', 'universities/A/grades/x2_sansLien', 'universities/A/payments/pay2',
+      // Notes : aucun accès parent en v1.4, même pour l'enfant autorisé (x1_a1).
+      'universities/A/grades/x1_a1', 'universities/A/grades/x1_a2', 'universities/A/grades/x2_sansLien', 'universities/A/payments/pay2',
       'universities/A/documents/d2', 'universities/A/parentLinks/parentOther', 'universities/A/parentLinks',
       'universities/A/students', 'universities/A/students/a1', 'universities/A/enrollments',
       'universities/A/exams/x1', 'universities/A/aiInsights/a1', 'universities/A/notifications/n_studentA',
@@ -252,9 +253,10 @@ describe('5d. parent', () => {
   })
   test('lien révoqué (authorized:false) → accès coupé', async () => {
     await env.withSecurityRulesDisabled((ctx) =>
-      ctx.database().ref('universities/A/parentLinks/parentA/a1/authorized').set(false)
+      ctx.database().ref('universities/A/parentLinks/parentA/studentA/authorized').set(false)
     )
-    await assertFails(R('parentA', 'universities/A/grades/x1_a1'))
+    // payments compare encore studentId à l'uid Auth (unification à venir).
+    await assertFails(R('parentA', 'universities/A/payments/pay1'))
   })
 })
 
@@ -385,6 +387,12 @@ describe('4. matrice RBAC UI vs règles', () => {
       })
     }
   }
+})
+
+test('4 bis. matrice RBAC : aucun écart entre permissions.ts et les règles', () => {
+  const gaps = matrix.filter((m) => m.ui !== m.rules).map((m) => `${m.role} × ${m.res} × ${m.action} : UI ${m.ui}, règles ${m.rules}`)
+  assert.ok(matrix.length > 0, 'matrice calculée')
+  assert.deepEqual(gaps, [])
 })
 
 after(() => writeFileSync(OUT, JSON.stringify(matrix, null, 1)))

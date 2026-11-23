@@ -105,8 +105,10 @@ d'un tenant, même en lecture seule. Trois garanties indépendantes :
 | `platformUniversities` | `super_admin_plateforme` : CRUD ; tous les autres : rien | `platform/universitiesIndex` : lecture `super_admin_plateforme` uniquement, écriture serveur uniquement |
 | `students`/`programs`/`courses`/`classes`/`library`/`academicYears` | `admin_universite` : CRUD ; `teacher`/`student` : lecture ; `parent` : rien | lecture refusée à `parent` (`role !== 'parent'`), écriture `admin_universite` uniquement |
 | `teachers` | `admin_universite` : CRUD ; `teacher` : lecture | lecture `admin_universite`/`teacher`, écriture `admin_universite` |
-| `grades`/`payments`/`documents` | accès restreint au propriétaire (`student`) et aux enfants autorisés (`parent`) | vérification par donnée (`data.child('studentId')`) + `parentLinks` |
-| `exams`/`enrollments` | `admin_universite` : CRUD ; `teacher` (exams) : CRU ; `student` : lecture ; `parent` : lecture (exams) ou rien (enrollments) | cohérent, `parent` exclu sauf `exams` |
+| `grades` (v1.4) | `admin_universite` : CRUD ; `teacher` : CRU ; `student` : lecture ; `parent` : rien | admin : lecture et correction dans son université ; enseignant : lecture et écriture sur SES cours, pour un étudiant de la filière du cours, jamais de suppression ; étudiant : `students/{studentId}/uid === auth.uid` ; valeur obligatoire entre 0 et `exams/{examId}/maxScore`, identifiant `{examId}_{studentId}` |
+| `exams` (v1.4) | `admin_universite` : CRUD ; `teacher` : CRU ; `student` : lecture ; `parent` : rien | enseignant : SES cours ; étudiant : cours de la filière de sa fiche (`users/{uid}/linkedRecordId`) ; type, date, coefficient, note maximale validés ; cours et note maximale immuables |
+| `payments`/`documents` | accès restreint au propriétaire (`student`) et aux enfants autorisés (`parent`) | vérification par donnée (`data.child('studentId')`, `ownerUid`) + `parentLinks` ; `studentId` encore à unifier sur l'id de fiche (README, backlog) |
+| `enrollments` | `admin_universite` : CRUD ; `teacher`/`student` : lecture | étudiant : `students/{studentId}/uid === auth.uid` ; `parent` exclu |
 | `elearning` | `admin_universite`/`teacher` : CRU ; `student` : lecture | idem |
 | `notifications` | lecture propriétaire uniquement | `data.child('recipientUid').val() === auth.uid` |
 | `aiInsights` | `admin_universite`/`teacher` : lecture seule ; personne en écriture côté client | écriture `false` (Cloud Functions uniquement), lecture `admin_universite`/`teacher` |
@@ -128,10 +130,14 @@ avec les requêtes réelles du module livré :
 | `programs`, `courses`, `classes` | `name` |
 | `signupRequests` | `status`, `createdAt` (demandes à traiter) |
 | `platform/universitiesIndex` | `plan`, `status` |
+| `grades` | `examId` (notes d'un examen : admin, enseignant du cours), `studentId` (notes de sa fiche : étudiant) |
+| `exams` | `courseId` (examens d'un cours : enseignant du cours, étudiant de la filière) |
 
-Les modules non livrés (`grades` par `studentId`, etc.) déclareront les
-leurs avec leurs requêtes réelles : les déclarer sans usage serait de la
-spéculation non vérifiable.
+Les listes de `grades` et d'`exams` ne s'ouvrent que **par requête**
+(`orderByChild` + `equalTo`), vérifiée par les règles (`query.orderByChild`,
+`query.equalTo`) ; seul l'admin lit la liste complète des examens. Les
+modules non livrés déclareront leurs index avec leurs requêtes réelles :
+les déclarer sans usage serait de la spéculation non vérifiable.
 
 ## 8. Configuration publique vs secrets serveur
 

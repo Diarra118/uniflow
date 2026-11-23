@@ -70,10 +70,11 @@ export const PERMISSIONS: PermissionMatrix = {
     // approveSignupRequest / rejectSignupRequest (règles : .write false).
     signupRequests: RO,
   },
-  // Enseignant : les écritures sur grades, exams et elearning sont limitées
-  // par les Security Rules aux cours dont il est responsable
-  // (courses/{courseId}/teacherId → teachers/{id}/uid === auth.uid). Cette
-  // matrice dit QUELLES actions existent, les règles disent SUR QUOI.
+  // Enseignant : lectures et écritures de grades et exams, écritures
+  // d'elearning, limitées par les Security Rules aux cours dont il est
+  // responsable (courses/{courseId}/teacherId → teachers/{id}/uid ===
+  // auth.uid) ; une note seulement pour un étudiant de la filière du cours.
+  // Cette matrice dit QUELLES actions existent, les règles disent SUR QUOI.
   teacher: {
     students: RO,
     teachers: RO,
@@ -97,6 +98,8 @@ export const PERMISSIONS: PermissionMatrix = {
     programs: RO,
     courses: RO,
     classes: RO,
+    // Ses notes (students/{studentId}/uid === auth.uid) et les examens des
+    // cours de sa filière ; aucune écriture.
     grades: RO,
     exams: RO,
     enrollments: RO,
@@ -110,8 +113,8 @@ export const PERMISSIONS: PermissionMatrix = {
   parent: {
     // Lecture toujours conditionnée, côté serveur, à l'existence d'une
     // entrée parentLinks/{parentUid}/{studentId} autorisée (architecture v1.1, décision #2).
-    // Pas d'`exams` : les règles n'ouvrent pas les examens aux parents.
-    grades: RO,
+    // Ni `grades` ni `exams` : aucun accès aux notes dans le lot v1.4 (le
+    // lien parent-enfant reste à unifier sur l'id de fiche, voir README).
     payments: RO,
     documents: RO,
     notifications: RO,
