@@ -72,6 +72,36 @@ const item = (author: string, courseId: string, extra: Record<string, unknown>) 
   updatedBy: author,
 })
 
+/** Examen complet au sens du .validate (type, date, coefficient, barème). */
+const exam = (author: string, courseId: string, extra: Record<string, unknown> = {}) => ({
+  courseId,
+  title: 'Devoir',
+  type: 'homework',
+  date: '2026-11-20',
+  coefficient: 1,
+  maxScore: 20,
+  createdBy: author,
+  updatedBy: author,
+  ...extra,
+})
+
+/** Cours de chaque examen de départ (x1 : c1, x2 : c2, x3 : c3). */
+const EXAM_COURSE: Record<string, string> = { x1: 'c1', x2: 'c2', x3: 'c3' }
+
+/** Note complète au sens du .validate ; son identifiant est {examId}_{studentId}. */
+const grade = (author: string, examId: string, studentId: string, value: unknown, extra: Record<string, unknown> = {}) => ({
+  examId,
+  courseId: EXAM_COURSE[examId],
+  studentId,
+  value,
+  createdBy: author,
+  updatedBy: author,
+  ...extra,
+})
+const gradeId = (examId: string, studentId: string) => `${examId}_${studentId}`
+const G1 = gradeId('x1', 's1') // note de studentA, cours c1 (teacherA)
+const G2 = gradeId('x2', 's2') // note de studentA2, cours c2 (teacherA2)
+
 // ---------------------------------------------------------------------
 // Données de départ (écrites règles désactivées)
 // ---------------------------------------------------------------------
@@ -108,20 +138,23 @@ const SEED = {
         parentA2: { studentA2: { authorized: true } },
       },
       students: {
-        s1: { firstName: 'Awa', lastName: 'Diallo', email: 'awa@a.edu', uid: 'studentA' },
-        s2: { firstName: 'Binta', lastName: 'Ba', email: 'binta@a.edu', uid: 'studentA2' },
-        s3: { firstName: 'Cheikh', lastName: 'Sy', email: 'cheikh@a.edu' },
+        s1: { firstName: 'Awa', lastName: 'Diallo', email: 'awa@a.edu', uid: 'studentA', programId: 'p1' },
+        s2: { firstName: 'Binta', lastName: 'Ba', email: 'binta@a.edu', uid: 'studentA2', programId: 'p1' },
+        s3: { firstName: 'Cheikh', lastName: 'Sy', email: 'cheikh@a.edu', programId: 'p1' },
+        // Autre filière (p2) : hors des cours c1, c2, c3.
+        s4: { firstName: 'Diane', lastName: 'Kane', email: 'diane@a.edu', programId: 'p2' },
       },
       teachers: {
         t1: { firstName: 'Moussa', email: 'moussa@a.edu', uid: 'teacherA' },
         t2: { firstName: 'Fatou', email: 'fatou@a.edu', uid: 'teacherA2' },
       },
-      programs: { p1: { name: 'Info' } },
-      // c1 → teacherA (fiche t1), c2 → teacherA2 (fiche t2), c3 → aucun responsable.
+      programs: { p1: { name: 'Info' }, p2: { name: 'Droit' } },
+      // c1 → teacherA (fiche t1), c2 → teacherA2 (fiche t2), c3 → aucun
+      // responsable. Tous dans la filière p1.
       courses: {
-        c1: { name: 'Algo', teacherId: 't1' },
-        c2: { name: 'Réseaux', teacherId: 't2' },
-        c3: { name: 'Sans responsable' },
+        c1: { name: 'Algo', teacherId: 't1', programId: 'p1' },
+        c2: { name: 'Réseaux', teacherId: 't2', programId: 'p1' },
+        c3: { name: 'Sans responsable', programId: 'p1' },
       },
       classes: { k1: { name: 'L1' } },
       library: { l1: { title: 'Livre' } },
@@ -131,15 +164,17 @@ const SEED = {
       },
       academicYears: { y1: { label: '2026-2027' } },
       exams: {
-        x1: { title: 'Partiel', courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
-        x2: { title: 'Final', courseId: 'c2', createdBy: 'adminA', updatedBy: 'adminA' },
+        x1: exam('adminA', 'c1', { title: 'Partiel', type: 'midterm', coefficient: 2 }),
+        x2: exam('adminA', 'c2', { title: 'Final', type: 'final', maxScore: 40 }),
+        x3: exam('adminA', 'c3', { title: 'Devoir' }),
       },
       indexes: { i1: { value: 1 } },
       enrollments: { e1: { studentId: 's1' }, e2: { studentId: 's2' } },
       grades: {
-        // studentId = id de la fiche étudiant (s1 → uid studentA, s2 → studentA2).
-        g1: { studentId: 's1', value: 15, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
-        g2: { studentId: 's2', value: 12, courseId: 'c2', createdBy: 'adminA', updatedBy: 'adminA' },
+        // Identifiant = {examId}_{studentId} ; studentId = id de la fiche
+        // étudiant (s1 → uid studentA, s2 → studentA2).
+        [G1]: grade('adminA', 'x1', 's1', 15),
+        [G2]: grade('adminA', 'x2', 's2', 12),
       },
       payments: { pay1: { studentId: 'studentA', amount: 100 }, pay2: { studentId: 'studentA2', amount: 100 } },
       documents: {
@@ -356,10 +391,10 @@ describe('16. collections de l’université', () => {
   })
 
   test('écriture exams / elearning : admin partout, étudiant jamais', async () => {
-    for (const path of [`${A}/exams/new`, `${A}/elearning/new`]) {
-      await assertSucceeds(write('adminA', path, item('adminA', 'c2', { title: 't' })))
-      await assertFails(write('studentA', path, item('studentA', 'c1', { title: 't3' })))
-    }
+    await assertSucceeds(write('adminA', `${A}/exams/new`, exam('adminA', 'c2')))
+    await assertFails(write('studentA', `${A}/exams/new`, exam('studentA', 'c1')))
+    await assertSucceeds(write('adminA', `${A}/elearning/new`, item('adminA', 'c2', { title: 't' })))
+    await assertFails(write('studentA', `${A}/elearning/new`, item('studentA', 'c1', { title: 't3' })))
   })
 
   test('enrollments : admin/enseignant listent, étudiant ne lit que les siennes', async () => {
@@ -392,15 +427,15 @@ describe('données par élève', () => {
   })
 
   test('18. grades', async () => {
-    await assertSucceeds(read('studentA', `${A}/grades/g1`))
-    await assertFails(read('studentA', `${A}/grades/g2`))
-    await assertSucceeds(read('parentA', `${A}/grades/g1`))
-    await assertFails(read('parentA', `${A}/grades/g2`)) // lien non autorisé
-    await assertSucceeds(read('teacherA', `${A}/grades/g2`))
-    await assertSucceeds(write('teacherA', `${A}/grades/g3`, item('teacherA', 'c1', { studentId: 'studentA', value: 10 })))
-    await assertFails(write('studentA', `${A}/grades/g1/value`, 20))
+    await assertSucceeds(read('studentA', `${A}/grades/${G1}`))
+    await assertFails(read('studentA', `${A}/grades/${G2}`))
+    await assertSucceeds(read('parentA', `${A}/grades/${G1}`))
+    await assertFails(read('parentA', `${A}/grades/${G2}`)) // lien non autorisé
+    await assertSucceeds(read('teacherA', `${A}/grades/${G2}`))
+    await assertSucceeds(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 10)))
+    await assertFails(write('studentA', `${A}/grades/${G1}/value`, 20))
     await assertFails(read('adminA', `${A}/grades`)) // pas de lecture au niveau liste
-    await assertFails(read('adminB', `${A}/grades/g1`))
+    await assertFails(read('adminB', `${A}/grades/${G1}`))
   })
 
   test('18 bis. grades : studentId = id de la fiche, accès étudiant par students/{studentId}/uid', async () => {
@@ -410,14 +445,14 @@ describe('données par élève', () => {
       // Fiche sans compte : aucun étudiant ne la lit.
       g3: { studentId: 's3', value: 11, courseId: 'c1', createdBy: 'adminA', updatedBy: 'adminA' },
     }))
-    await assertSucceeds(read('studentA', `${A}/grades/g1`)) // s1.uid === studentA
-    await assertSucceeds(read('studentA2', `${A}/grades/g2`)) // s2.uid === studentA2
+    await assertSucceeds(read('studentA', `${A}/grades/${G1}`)) // s1.uid === studentA
+    await assertSucceeds(read('studentA2', `${A}/grades/${G2}`)) // s2.uid === studentA2
     await assertFails(read('studentA', `${A}/grades/legacy`))
     await assertFails(read('studentA', `${A}/grades/g3`))
-    await assertFails(read('studentA2', `${A}/grades/g1`))
+    await assertFails(read('studentA2', `${A}/grades/${G1}`))
     // Fiche supprimée : le lien disparaît, l'accès aussi.
     await asAdminSdk((root) => root.ref(`${A}/students/s1`).remove())
-    await assertFails(read('studentA', `${A}/grades/g1`))
+    await assertFails(read('studentA', `${A}/grades/${G1}`))
   })
 
   test('19. payments', async () => {
@@ -466,70 +501,147 @@ describe('données par élève', () => {
 
 describe('21 bis. enseignant : écritures limitées à ses cours', () => {
   test('grades : créer et modifier sur son cours ; jamais ailleurs ; jamais supprimer', async () => {
-    const g = (extra: Record<string, unknown> = {}) => ({ studentId: 'studentA', value: 10, ...extra })
-    await assertSucceeds(write('teacherA', `${A}/grades/new`, item('teacherA', 'c1', g())))
-    await assertSucceeds(patch('teacherA', `${A}/grades/g1`, { value: 16, updatedBy: 'teacherA' }))
+    await assertSucceeds(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 10)))
+    await assertSucceeds(patch('teacherA', `${A}/grades/${G1}`, { value: 16, updatedBy: 'teacherA' }))
     // Cours d'un collègue, cours sans responsable, cours inexistant.
-    await assertFails(write('teacherA', `${A}/grades/n2`, item('teacherA', 'c2', g())))
-    await assertFails(write('teacherA', `${A}/grades/n3`, item('teacherA', 'c3', g())))
-    await assertFails(write('teacherA', `${A}/grades/n4`, item('teacherA', 'c9', g())))
-    await assertFails(patch('teacherA', `${A}/grades/g2`, { value: 20, updatedBy: 'teacherA' }))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x2', 's3')}`, grade('teacherA', 'x2', 's3', 10)))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x3', 's3')}`, grade('teacherA', 'x3', 's3', 10)))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x9', 's3')}`, grade('teacherA', 'x9', 's3', 10, { courseId: 'c9' })))
+    await assertFails(patch('teacherA', `${A}/grades/${G2}`, { value: 20, updatedBy: 'teacherA' }))
     // Déplacer une note vers / depuis un cours qui n'est pas le sien.
-    await assertFails(patch('teacherA', `${A}/grades/g1`, { courseId: 'c2', updatedBy: 'teacherA' }))
-    await assertFails(patch('teacherA', `${A}/grades/g2`, { courseId: 'c1', updatedBy: 'teacherA' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { courseId: 'c2', updatedBy: 'teacherA' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G2}`, { courseId: 'c1', updatedBy: 'teacherA' }))
     // Suppression d'une note interdite, même sur son cours.
-    await assertFails(del('teacherA', `${A}/grades/g1`))
-    await assertFails(write('teacherA', `${A}/grades/g1`, null))
+    await assertFails(del('teacherA', `${A}/grades/${G1}`))
+    await assertFails(write('teacherA', `${A}/grades/${G1}`, null))
     // Le collègue modifie bien son propre cours.
-    await assertSucceeds(patch('teacherA2', `${A}/grades/g2`, { value: 13, updatedBy: 'teacherA2' }))
+    await assertSucceeds(patch('teacherA2', `${A}/grades/${G2}`, { value: 13, updatedBy: 'teacherA2' }))
   })
 
-  // Limite connue : les règles RTDB ne peuvent pas parcourir les champs
-  // existants ; vider un champ d'une note de SON cours est donc une
-  // modification autorisée. Se fermera en rendant obligatoires les champs
-  // métier (ex. `value` numérique) quand le schéma des notes sera défini.
-  test('grades : vider un champ métier d’une note de son cours', { todo: 'schéma des notes à définir (champ value obligatoire)' }, async () => {
-    // Dernier auteur = cet enseignant (updatedBy), puis champ vidé.
-    await assertSucceeds(patch('teacherA', `${A}/grades/g1`, { value: 16, updatedBy: 'teacherA' }))
-    await assertFails(write('teacherA', `${A}/grades/g1/value`, null))
+  // Limite fermée (v1.4) : `value` est obligatoire, numérique, entre 0 et
+  // la note maximale de l'examen. Une note existante ne peut donc plus être
+  // vidée, ni par l'enseignant ni par l'admin (l'admin peut la supprimer).
+  test('grades : une note existante ne peut pas être vidée', async () => {
+    // Dernier auteur = cet enseignant (updatedBy), puis valeur vidée.
+    await assertSucceeds(patch('teacherA', `${A}/grades/${G1}`, { value: 16, updatedBy: 'teacherA' }))
+    await assertFails(write('teacherA', `${A}/grades/${G1}/value`, null))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { value: null, updatedBy: 'teacherA' }))
+    await assertFails(write('teacherA', `${A}/grades/${G1}`, { ...grade('adminA', 'x1', 's1', 0), value: null, updatedBy: 'teacherA' }))
+    await assertFails(write('adminA', `${A}/grades/${G1}/value`, null))
+    await assertFails(patch('adminA', `${A}/grades/${G1}`, { value: null, updatedBy: 'adminA' }))
+    // La note est intacte.
+    const snap = await read('adminA', `${A}/grades/${G1}`)
+    assert.equal(snap.val().value, 16)
+  })
+
+  test('grades : valeur obligatoire, numérique, entre 0 et la note maximale', async () => {
+    const p = `${A}/grades/${gradeId('x1', 's3')}` // examen x1 : note maximale 20
+    for (const bad of [-1, -0.5, 20.5, 21, 100, '15', true, null]) {
+      await assertFails(write('teacherA', p, grade('teacherA', 'x1', 's3', bad)))
+      await assertFails(write('adminA', p, grade('adminA', 'x1', 's3', bad)))
+    }
+    const { value: _omit, ...withoutValue } = grade('teacherA', 'x1', 's3', 0)
+    await assertFails(write('teacherA', p, withoutValue))
+    for (const ok of [0, 12.5, 20]) {
+      await assertSucceeds(write('teacherA', p, grade('teacherA', 'x1', 's3', ok)))
+    }
+    // Barème propre à l'examen : x2 est noté sur 40.
+    await assertSucceeds(patch('adminA', `${A}/grades/${G2}`, { value: 40, updatedBy: 'adminA' }))
+    await assertFails(patch('adminA', `${A}/grades/${G2}`, { value: 41, updatedBy: 'adminA' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { value: 21, updatedBy: 'teacherA' }))
+  })
+
+  test('grades : appréciation facultative, texte de 500 caractères au plus', async () => {
+    const p = `${A}/grades/${gradeId('x1', 's3')}`
+    await assertSucceeds(write('teacherA', p, grade('teacherA', 'x1', 's3', 14, { comment: 'Bon travail.' })))
+    await assertSucceeds(write('teacherA', p, grade('teacherA', 'x1', 's3', 14, { comment: 'x'.repeat(500) })))
+    await assertFails(write('teacherA', p, grade('teacherA', 'x1', 's3', 14, { comment: 'x'.repeat(501) })))
+    await assertFails(write('teacherA', p, grade('teacherA', 'x1', 's3', 14, { comment: 12 })))
+  })
+
+  test('grades : identifiant {examId}_{studentId}, examen du même cours, fiche existante', async () => {
+    // Identifiant libre ou ne correspondant pas au couple examen / fiche.
+    await assertFails(write('teacherA', `${A}/grades/n1`, grade('teacherA', 'x1', 's3', 10)))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x1', 's2')}`, grade('teacherA', 'x1', 's3', 10)))
+    // Examen d'un autre cours rattaché à son propre cours.
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x2', 's3')}`, grade('teacherA', 'x2', 's3', 10, { courseId: 'c1' })))
+    // Examen ou fiche inexistants.
+    await assertFails(write('adminA', `${A}/grades/${gradeId('x8', 's3')}`, grade('adminA', 'x8', 's3', 10, { courseId: 'c1' })))
+    await assertFails(write('adminA', `${A}/grades/${gradeId('x1', 's9')}`, grade('adminA', 'x1', 's9', 10)))
   })
 
   test('grades : auteur et structure validés (.validate)', async () => {
+    const p = `${A}/grades/${gradeId('x1', 's3')}`
     // createdBy doit être l'auteur à la création, puis immuable.
-    await assertFails(write('teacherA', `${A}/grades/n1`, { ...item('teacherA', 'c1', { studentId: 'studentA' }), createdBy: 'adminA' }))
-    await assertFails(patch('teacherA', `${A}/grades/g1`, { createdBy: 'teacherA', updatedBy: 'teacherA' }))
+    await assertFails(write('teacherA', p, { ...grade('teacherA', 'x1', 's3', 10), createdBy: 'adminA' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { createdBy: 'teacherA', updatedBy: 'teacherA' }))
     // updatedBy doit être l'auteur de CHAQUE écriture.
-    await assertFails(write('teacherA', `${A}/grades/n1`, { ...item('teacherA', 'c1', { studentId: 'studentA' }), updatedBy: 'adminA' }))
-    await assertFails(patch('teacherA', `${A}/grades/g1`, { value: 17 }))
+    await assertFails(write('teacherA', p, { ...grade('teacherA', 'x1', 's3', 10), updatedBy: 'adminA' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { value: 17 }))
     // Champs obligatoires.
-    await assertFails(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', {})))
-    await assertFails(write('adminA', `${A}/grades/n1`, { studentId: 'studentA', createdBy: 'adminA', updatedBy: 'adminA' }))
+    await assertFails(write('teacherA', p, { value: 10, createdBy: 'teacherA', updatedBy: 'teacherA' }))
+    await assertFails(write('adminA', p, { studentId: 's3', createdBy: 'adminA', updatedBy: 'adminA' }))
+  })
+
+  test('grades : examen, cours et fiche immuables, même pour l’admin', async () => {
+    for (const who of ['teacherA', 'adminA'] as Who[]) {
+      await assertFails(patch(who, `${A}/grades/${G1}`, { studentId: 's3', updatedBy: IDS[who].uid }))
+      await assertFails(patch(who, `${A}/grades/${G1}`, { examId: 'x3', updatedBy: IDS[who].uid }))
+      await assertFails(patch(who, `${A}/grades/${G1}`, { courseId: 'c3', updatedBy: IDS[who].uid }))
+    }
   })
 
   test('grades : un enseignant sans fiche liée n’écrit nulle part', async () => {
-    await assertFails(write('teacherNoRecord', `${A}/grades/n1`, item('teacherNoRecord', 'c1', { studentId: 'studentA' })))
-    await assertFails(write('teacherNoRecord', `${A}/grades/n2`, item('teacherNoRecord', 'c3', { studentId: 'studentA' })))
+    await assertFails(write('teacherNoRecord', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherNoRecord', 'x1', 's3', 10)))
+    await assertFails(write('teacherNoRecord', `${A}/grades/${gradeId('x3', 's3')}`, grade('teacherNoRecord', 'x3', 's3', 10)))
   })
 
   test('grades : réaffectation du cours par l’admin → l’ancien enseignant perd l’accès', async () => {
     await assertSucceeds(write('adminA', `${A}/courses/c1/teacherId`, 't2'))
-    await assertFails(patch('teacherA', `${A}/grades/g1`, { value: 18, updatedBy: 'teacherA' }))
-    await assertSucceeds(patch('teacherA2', `${A}/grades/g1`, { value: 18, updatedBy: 'teacherA2' }))
+    await assertFails(patch('teacherA', `${A}/grades/${G1}`, { value: 18, updatedBy: 'teacherA' }))
+    await assertSucceeds(patch('teacherA2', `${A}/grades/${G1}`, { value: 18, updatedBy: 'teacherA2' }))
   })
 
-  test('grades : admin écrit sur tous les cours, peut changer le cours et supprimer', async () => {
-    await assertSucceeds(write('adminA', `${A}/grades/n1`, item('adminA', 'c3', { studentId: 'studentA' })))
-    await assertSucceeds(patch('adminA', `${A}/grades/g1`, { courseId: 'c2', updatedBy: 'adminA' }))
-    await assertSucceeds(del('adminA', `${A}/grades/g2`))
+  test('grades : admin crée et corrige sur tous les cours, et peut supprimer', async () => {
+    await assertSucceeds(write('adminA', `${A}/grades/${gradeId('x3', 's3')}`, grade('adminA', 'x3', 's3', 9)))
+    await assertSucceeds(patch('adminA', `${A}/grades/${G1}`, { value: 17, comment: 'Corrigée après réclamation.', updatedBy: 'adminA' }))
+    await assertSucceeds(del('adminA', `${A}/grades/${G2}`))
   })
 
   test('exams : créer et modifier sur son cours, jamais supprimer', async () => {
-    await assertSucceeds(write('teacherA', `${A}/exams/new`, item('teacherA', 'c1', { title: 'Rattrapage' })))
+    await assertSucceeds(write('teacherA', `${A}/exams/new`, exam('teacherA', 'c1', { title: 'Rattrapage' })))
     await assertSucceeds(patch('teacherA', `${A}/exams/x1`, { title: 'Partiel S1', updatedBy: 'teacherA' }))
-    await assertFails(write('teacherA', `${A}/exams/n2`, item('teacherA', 'c2', { title: 'x' })))
+    await assertFails(write('teacherA', `${A}/exams/n2`, exam('teacherA', 'c2')))
     await assertFails(patch('teacherA', `${A}/exams/x2`, { title: 'x', updatedBy: 'teacherA' }))
     await assertFails(del('teacherA', `${A}/exams/x1`))
     await assertSucceeds(del('adminA', `${A}/exams/x2`))
+  })
+
+  test('exams : titre, type, date, coefficient et note maximale validés', async () => {
+    const p = `${A}/exams/new`
+    for (const type of ['homework', 'midterm', 'final']) {
+      await assertSucceeds(write('teacherA', p, exam('teacherA', 'c1', { type })))
+    }
+    for (const bad of [
+      { title: '' }, { title: 'x'.repeat(121) }, { title: 3 },
+      { type: 'quiz' }, { type: null },
+      { date: '20/11/2026' }, { date: '2026-11' }, { date: 20261120 },
+      { coefficient: 0 }, { coefficient: -1 }, { coefficient: 11 }, { coefficient: '2' },
+      { maxScore: 0 }, { maxScore: 101 }, { maxScore: '20' }, { maxScore: null },
+    ]) {
+      await assertFails(write('teacherA', p, exam('teacherA', 'c1', bad)))
+      await assertFails(write('adminA', p, exam('adminA', 'c1', bad)))
+    }
+    // Bornes hautes acceptées (nouvel examen : la note maximale est immuable).
+    await assertSucceeds(write('teacherA', `${A}/exams/bornes`, exam('teacherA', 'c1', { title: 'x'.repeat(120), coefficient: 10, maxScore: 100 })))
+  })
+
+  test('exams : cours et note maximale immuables, même pour l’admin', async () => {
+    for (const who of ['teacherA', 'adminA'] as Who[]) {
+      await assertFails(patch(who, `${A}/exams/x1`, { maxScore: 40, updatedBy: IDS[who].uid }))
+      await assertFails(patch(who, `${A}/exams/x1`, { courseId: 'c3', updatedBy: IDS[who].uid }))
+    }
+    await assertSucceeds(patch('adminA', `${A}/exams/x1`, { coefficient: 3, date: '2026-12-01', updatedBy: 'adminA' }))
   })
 
   test('elearning : créer, modifier et supprimer sur son cours uniquement', async () => {
@@ -609,7 +721,7 @@ describe('24. révocation immédiate (profil /users)', () => {
     l.off()
     await assertFails(read('teacherA', `${A}/students`))
     await assertFails(read('teacherA', `${A}/programs`))
-    await assertFails(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', { studentId: 'studentA' })))
+    await assertFails(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 10)))
   })
 
   test('changement de rôle : l’ancien accès est retiré immédiatement', async () => {
@@ -634,12 +746,12 @@ describe('24. révocation immédiate (profil /users)', () => {
     await assertFails(read('ghostTeacherA', `${A}/meta`))
     await asAdminSdk((root) => root.ref('users/studentA').remove())
     await assertFails(read('studentA', `${A}/students/s1`))
-    await assertFails(read('studentA', `${A}/grades/g1`))
+    await assertFails(read('studentA', `${A}/grades/${G1}`))
   })
 
   test('profil en attente (pending) : accès refusé', async () => {
     await asAdminSdk((root) => root.ref('users/parentA/status').set('pending'))
-    await assertFails(read('parentA', `${A}/grades/g1`))
+    await assertFails(read('parentA', `${A}/grades/${G1}`))
     await assertFails(read('parentA', `${A}/parentLinks/parentA`))
   })
 
@@ -663,7 +775,7 @@ describe('24. révocation immédiate (profil /users)', () => {
     await assertFails(read('teacherA', `${A}/students`))
     await asAdminSdk((root) => root.ref('users/teacherA/status').set('active'))
     await assertSucceeds(read('teacherA', `${A}/students`))
-    await assertSucceeds(write('teacherA', `${A}/grades/n1`, item('teacherA', 'c1', { studentId: 'studentA' })))
+    await assertSucceeds(write('teacherA', `${A}/grades/${gradeId('x1', 's3')}`, grade('teacherA', 'x1', 's3', 10)))
     await assertFails(read('teacherA', `${A}/payments/pay1`))
   })
 })
