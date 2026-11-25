@@ -22,6 +22,7 @@ const PROJECT = fileURLToPath(new URL('../..', import.meta.url))
 const require = createRequire(`${PROJECT}/functions/package.json`)
 const admin = require('firebase-admin')
 const { DEMO } = require(`${PROJECT}/functions/lib-test/scripts/seedDemo.js`)
+const { notesTree } = require(`${PROJECT}/functions/lib-test/scripts/demoData.js`)
 const PID = process.env.GCLOUD_PROJECT
 assert.equal(PID, 'demo-uniflow', 'le frontend en mode émulateurs vise demo-uniflow')
 const BASE = 'http://localhost:5182'
@@ -58,6 +59,8 @@ function tree(u) {
       ...(s.login ? { uid: `uid-${s.id}` } : {}),
       searchKey: `${s.lastName} ${s.firstName} ${s.number}`.toLowerCase(), createdAt: at(50 + i), updatedAt: at(50 + i),
     })),
+    // Notes & examens : même forme que le seed (notesTree).
+    ...(u.exams?.length ? notesTree(u) : {}),
     ...(u.parent
       ? { parentLinks: { [u.parent.uid]: { [u.parent.childId]: { studentId: u.parent.childId, relation: u.parent.relation, authorized: true, grantedAt: at(80), grantedBy: u.admin.uid } } } }
       : {}),

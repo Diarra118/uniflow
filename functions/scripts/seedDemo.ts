@@ -19,7 +19,7 @@ import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { AUTH_EMULATOR, PROJECT_ID, loadRulesIntoEmulator, seedApp } from './seedEmulators'
-import { DEMO, demoAccounts, projectRoot, universityTree, type Role } from './demoData'
+import { DEMO, demoAccounts, notesTree, projectRoot, universityTree, type Role } from './demoData'
 
 /** Jeu de démo : défini dans demoData.ts, réexporté pour les tests. */
 export { DEMO, demoAccounts }
@@ -158,6 +158,21 @@ async function writeUniversityIndex() {
   }
 }
 
+/**
+ * Notes & examens (v1.4) : une démo créée avant ce module (données
+ * importées de .demo-data) les reçoit au lancement suivant. Rien n'est
+ * réécrit si l'université a déjà des examens.
+ */
+async function ensureNotesData() {
+  const db = seedApp().database()
+  for (const u of DEMO) {
+    if (!u.exams?.length) continue
+    if ((await db.ref(`universities/${u.id}/exams`).get()).exists()) continue
+    const { exams, grades } = notesTree(u)
+    await db.ref(`universities/${u.id}`).update({ exams, grades })
+  }
+}
+
 export async function seedDemo(): Promise<DemoSeedOutcome> {
   await loadRulesIntoEmulator()
   const db = seedApp().database()
@@ -173,6 +188,7 @@ export async function seedDemo(): Promise<DemoSeedOutcome> {
     writeAccountsFile(await createAll(Date.now()))
     outcome = 'created'
   }
+  await ensureNotesData()
   await writeUniversityIndex()
   return outcome
 }

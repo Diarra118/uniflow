@@ -50,6 +50,28 @@ export interface UniversityData {
   teachers: Person[]
   students: Person[]
   parent?: { uid: string; firstName: string; lastName: string; childId: string; relation: 'father' | 'mother' | 'guardian' }
+  /** Notes & examens (v1.4) : examens de cours ayant un enseignant, notes
+   * des étudiants de la filière du cours. Facultatif. */
+  exams?: DemoExam[]
+  grades?: DemoGrade[]
+}
+
+export interface DemoExam {
+  id: string
+  courseId: string
+  title: string
+  type: 'homework' | 'midterm' | 'final'
+  /** AAAA-MM-JJ */
+  date: string
+  coefficient: number
+  maxScore: number
+}
+
+export interface DemoGrade {
+  examId: string
+  studentId: string
+  value: number
+  comment?: string
 }
 
 export const YEAR = '2026-2027'
@@ -102,6 +124,37 @@ export const DEMO: UniversityData[] = [
       { id: 'etu-hz-12', number: 'HZ-2026-012', firstName: 'Lamine', lastName: 'Seck', classId: 'cls-drt-l1' },
     ],
     parent: { uid: 'demo-parent-horizon', firstName: 'Mamadou', lastName: 'Diallo', childId: 'etu-hz-01', relation: 'father' },
+    // Notes & examens : INF101 et INF201 (Moussa Traoré), GES101 (Aminata
+    // Sow). Le devoir 2 d'INF101 et le TP d'INF201 restent à noter.
+    exams: [
+      { id: 'ex-inf101-dv1', courseId: 'crs-inf101', title: 'Devoir 1 — Algorithmes de tri', type: 'homework', date: '2026-10-06', coefficient: 1, maxScore: 20 },
+      { id: 'ex-inf101-part', courseId: 'crs-inf101', title: 'Partiel de mi-semestre', type: 'midterm', date: '2026-11-03', coefficient: 2, maxScore: 20 },
+      { id: 'ex-inf101-dv2', courseId: 'crs-inf101', title: 'Devoir 2 — Récursivité', type: 'homework', date: '2026-11-17', coefficient: 1, maxScore: 10 },
+      { id: 'ex-inf201-tp', courseId: 'crs-inf201', title: 'TP noté — Modélisation', type: 'homework', date: '2026-11-24', coefficient: 1, maxScore: 20 },
+      { id: 'ex-ges101-dv1', courseId: 'crs-ges101', title: 'Devoir — Écritures comptables', type: 'homework', date: '2026-10-13', coefficient: 1, maxScore: 20 },
+      { id: 'ex-ges101-part', courseId: 'crs-ges101', title: 'Partiel de comptabilité', type: 'midterm', date: '2026-11-10', coefficient: 2, maxScore: 40 },
+    ],
+    grades: [
+      { examId: 'ex-inf101-dv1', studentId: 'etu-hz-01', value: 14, comment: 'Tri fusion bien expliqué.' },
+      { examId: 'ex-inf101-dv1', studentId: 'etu-hz-02', value: 11 },
+      { examId: 'ex-inf101-dv1', studentId: 'etu-hz-03', value: 16, comment: 'Très bonne analyse de complexité.' },
+      { examId: 'ex-inf101-dv1', studentId: 'etu-hz-04', value: 9, comment: 'Revoir les cas limites.' },
+      { examId: 'ex-inf101-dv1', studentId: 'etu-hz-05', value: 13 },
+      { examId: 'ex-inf101-part', studentId: 'etu-hz-01', value: 12.5 },
+      { examId: 'ex-inf101-part', studentId: 'etu-hz-02', value: 9.5, comment: 'Exercice 3 non traité.' },
+      { examId: 'ex-inf101-part', studentId: 'etu-hz-03', value: 15 },
+      { examId: 'ex-inf101-part', studentId: 'etu-hz-04', value: 10.5 },
+      { examId: 'ex-inf101-part', studentId: 'etu-hz-05', value: 14 },
+      { examId: 'ex-inf101-dv2', studentId: 'etu-hz-01', value: 8 },
+      { examId: 'ex-inf101-dv2', studentId: 'etu-hz-02', value: 6 },
+      { examId: 'ex-inf101-dv2', studentId: 'etu-hz-05', value: 7 },
+      { examId: 'ex-ges101-dv1', studentId: 'etu-hz-06', value: 12 },
+      { examId: 'ex-ges101-dv1', studentId: 'etu-hz-07', value: 15.5, comment: 'Présentation soignée.' },
+      { examId: 'ex-ges101-dv1', studentId: 'etu-hz-08', value: 10 },
+      { examId: 'ex-ges101-part', studentId: 'etu-hz-06', value: 26 },
+      { examId: 'ex-ges101-part', studentId: 'etu-hz-07', value: 31 },
+      { examId: 'ex-ges101-part', studentId: 'etu-hz-08', value: 18, comment: 'Bilan incomplet.' },
+    ],
   },
   {
     id: 'institut-baobab',
@@ -207,6 +260,44 @@ export function demoAccounts(): Account[] {
   return accounts
 }
 
+/** Jour (AAAA-MM-JJ) → millisecondes UTC, pour dater les notes de démo. */
+const dayMs = (date: string) => Date.parse(`${date}T09:00:00Z`)
+
+/** Examens et notes au format de la base (auteur : enseignant du cours,
+ * identifiant de note {examId}_{studentId}, studentId = id de fiche). */
+export function notesTree(u: UniversityData) {
+  const teacherUid = (courseId: string) => {
+    const teacherId = u.courses.find((c) => c.id === courseId)?.teacherId
+    return teacherId ? `uid-${teacherId}` : u.admin.uid
+  }
+  const exams: Record<string, unknown> = {}
+  for (const e of u.exams ?? []) {
+    const { id, ...rest } = e
+    const author = teacherUid(e.courseId)
+    const at = dayMs(e.date) - 7 * 86_400_000
+    exams[id] = { ...rest, createdBy: author, updatedBy: author, createdAt: at, updatedAt: at }
+  }
+  const grades: Record<string, unknown> = {}
+  ;(u.grades ?? []).forEach((g, i) => {
+    const exam = (u.exams ?? []).find((e) => e.id === g.examId)
+    if (!exam) throw new Error(`Note de démo sans examen : ${g.examId}`)
+    const author = teacherUid(exam.courseId)
+    const at = dayMs(exam.date) + 3 * 86_400_000 + i * 60_000
+    grades[`${g.examId}_${g.studentId}`] = {
+      examId: g.examId,
+      courseId: exam.courseId,
+      studentId: g.studentId,
+      value: g.value,
+      ...(g.comment ? { comment: g.comment } : {}),
+      createdBy: author,
+      updatedBy: author,
+      createdAt: at,
+      updatedAt: at,
+    }
+  })
+  return { exams, grades }
+}
+
 export function universityTree(u: UniversityData, now: number) {
   const day = 86_400_000
   const t0 = now - 60 * day
@@ -286,5 +377,6 @@ export function universityTree(u: UniversityData, now: number) {
       },
     }
   }
+  if (u.exams?.length) Object.assign(tree, notesTree(u))
   return tree
 }
