@@ -5,7 +5,6 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
-  ClipboardCheck,
   CreditCard,
   GraduationCap,
   Layers,
@@ -328,7 +327,6 @@ export function AdminDashboard() {
         <ComingSoonCard
           index={10}
           items={[
-            { icon: ClipboardCheck, label: 'Notes et examens', detail: 'Saisie par les enseignants, relevés par étudiant.' },
             { icon: CreditCard, label: 'Paiements', detail: 'Frais de scolarité et suivi des règlements.' },
             { icon: Video, label: 'E-learning', detail: 'Supports et activités en ligne par cours.' },
           ]}

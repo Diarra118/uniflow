@@ -8,6 +8,8 @@ import { countLabel } from '@/shared/utils/plural'
 import { ENROLLMENT_STATUS_LABELS, ENROLLMENT_STATUS_TONE } from '@/modules/students/schema'
 import type { ClassGroup, CourseUnit, Program, StudentProfile } from '@/core/types'
 import { useNode, useTenantRows } from './useDashboardData'
+import { useExamsOfCourses, useGradesOfStudent } from '@/modules/grades/hooks'
+import { EXAM_TYPE_LABELS, formatScore } from '@/modules/grades/schema'
 import { byId, totalCredits } from './stats'
 import {
   ComingSoonCard,
@@ -53,6 +55,21 @@ export function StudentDashboard() {
         : null,
     [me, courses.data]
   )
+
+  // Dernières notes : SES notes (requête par fiche) et les examens de ses cours.
+  const myGrades = useGradesOfStudent(hasRecord ? uid : null, recordId)
+  const myCourseIds = useMemo(() => (myCourses ? myCourses.map((c) => c.id) : null), [myCourses])
+  const myExams = useExamsOfCourses(hasRecord ? uid : null, myCourseIds)
+  const latestGrades = useMemo(() => {
+    if (!myGrades.grades || !myExams.exams || !myCourses) return null
+    const examById = byId(myExams.exams)
+    const courseById = byId(myCourses)
+    return [...myGrades.grades]
+      .filter((g) => examById.has(g.examId))
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+      .slice(0, 5)
+      .map((g) => ({ grade: g, exam: examById.get(g.examId)!, course: courseById.get(g.courseId) }))
+  }, [myGrades.grades, myExams.exams, myCourses])
 
   if (!appUser) return null
 
@@ -141,10 +158,48 @@ export function StudentDashboard() {
           )}
         </Panel>
 
-        <ComingSoonCard
+        <Panel
+          id="latest-grades"
           index={2}
+          icon={ClipboardCheck}
+          title="Dernières notes"
+          footer={hasRecord ? { to: '/app/mes-notes', label: 'Voir toutes mes notes' } : undefined}
+        >
+          {!hasRecord ? (
+            <PanelEmpty icon={ClipboardCheck} title="Aucune note à afficher">
+              Vos notes s'afficheront une fois votre fiche rattachée.
+            </PanelEmpty>
+          ) : myGrades.error || myExams.error ? (
+            <PanelError what="vos notes" />
+          ) : !latestGrades ? (
+            <PanelSkeleton rows={3} />
+          ) : latestGrades.length === 0 ? (
+            <PanelEmpty icon={ClipboardCheck} title="Aucune note pour l'instant">
+              Vos notes apparaîtront ici dès leur saisie par vos enseignants.
+            </PanelEmpty>
+          ) : (
+            <ul className="-mx-2 divide-y divide-base-300" data-testid="latest-grades">
+              {latestGrades.map(({ grade, exam, course }) => (
+                <li key={grade.id} className="flex items-center gap-3 px-2 py-2.5">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{exam.title}</span>
+                    <span className="block truncate text-xs text-base-content/70">
+                      <span className="font-mono-data">{course?.code ?? ''}</span> · {EXAM_TYPE_LABELS[exam.type]}
+                    </span>
+                  </span>
+                  <span className="dash-number shrink-0 text-sm">
+                    <span className="font-semibold">{formatScore(grade.value)}</span>
+                    <span className="text-base-content/70"> / {formatScore(exam.maxScore)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <ComingSoonCard
+          index={3}
           items={[
-            { icon: ClipboardCheck, label: 'Notes et examens', detail: "Vos résultats et votre calendrier d'épreuves." },
             { icon: CreditCard, label: 'Paiements', detail: 'Frais de scolarité et reçus.' },
             { icon: FileText, label: 'Documents', detail: 'Attestations et relevés à télécharger.' },
           ]}

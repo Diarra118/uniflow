@@ -139,7 +139,7 @@ test('reconnexion de l’étudiant validé : navigation étudiant, sa fiche, lis
   await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
   await page.getByRole('link', { name: 'Mon dossier' }).waitFor({ timeout: 15000 })
   report.studentNav = await navLinks(page)
-  assert.deepEqual(report.studentNav, ['Classes', 'Cours', 'Filières', 'Mon dossier', 'Tableau de bord'])
+  assert.deepEqual(report.studentNav, ['Classes', 'Cours', 'Filières', 'Mes notes', 'Mon dossier', 'Tableau de bord'])
   await page.goto(`${BASE}/app/mon-dossier`)
   await page.getByText(STUDENT.number).first().waitFor({ timeout: 15000 })
   await page.goto(`${BASE}/app/students`)

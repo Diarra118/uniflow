@@ -21,7 +21,6 @@ import { FUNCTIONS_ENABLED } from '@/core/config/features'
 // Aperçu visuel de la feuille de route — aucun lien, aucune donnée : ces
 // modules seront implémentés phase par phase (voir architecture §10).
 const UPCOMING_MODULES = [
-  { label: 'Notes & examens', icon: ClipboardCheck },
   { label: 'Paiements', icon: CreditCard },
   { label: 'E-learning', icon: Video },
 ]
@@ -36,6 +35,11 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const canReadPrograms = useCan('programs', 'read')
   const canReadCourses = useCan('courses', 'read')
   const canReadClasses = useCan('classes', 'read')
+  // Notes : saisie (enseignant) ou lecture et correction (admin) ; « Mes
+  // notes » pour l'étudiant, à partir de sa fiche.
+  const canGrade = useCan('grades', 'update')
+  const canReadGrades = useCan('grades', 'read')
+  const canReadOwnGrades = canReadOwnRecord && canReadGrades
   // Version hébergée sans Cloud Functions : pas de page des demandes.
   const canReadSignupRequests = useCan('signupRequests', 'read') && FUNCTIONS_ENABLED
   const pendingSignups = usePendingSignupCount(
@@ -111,6 +115,18 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink to="/app/classes" onClick={onNavigate} className={linkClass}>
                 <Rows3 size={17} strokeWidth={2} />
                 Classes
+              </NavLink>
+            )}
+            {canGrade && (
+              <NavLink to="/app/notes" onClick={onNavigate} className={linkClass}>
+                <ClipboardCheck size={17} strokeWidth={2} />
+                Notes
+              </NavLink>
+            )}
+            {canReadOwnGrades && (
+              <NavLink to="/app/mes-notes" onClick={onNavigate} className={linkClass}>
+                <ClipboardCheck size={17} strokeWidth={2} />
+                Mes notes
               </NavLink>
             )}
             {canReadSignupRequests && (

@@ -3,7 +3,9 @@ import { BookOpen, ClipboardCheck, Bell, Layers, Award, Video } from 'lucide-rea
 import { useAuth } from '@/core/firebase/AuthContext'
 import { ROLE_LABELS } from '@/shared/config/roleLabels'
 import { countLabel } from '@/shared/utils/plural'
-import type { CourseUnit, Program, TeacherProfile } from '@/core/types'
+import type { CourseUnit, Program, StudentProfile, TeacherProfile } from '@/core/types'
+import { useExamsOfCourses, useGradesOfExams } from '@/modules/grades/hooks'
+import { isExamToGrade, studentsToGrade } from '@/modules/grades/grading'
 import { useTenantRows } from './useDashboardData'
 import { byId, coursesOfTeacher, totalCredits } from './stats'
 import {
@@ -37,6 +39,22 @@ export function TeacherDashboard() {
     [courses.data, recordResolved, teacherId]
   )
   const programById = useMemo(() => byId(programs.data ?? []), [programs.data])
+
+  // Examens à noter : examens de ses cours où au moins un étudiant de la
+  // filière n'a pas encore de note (lectures par requête, règles v1.4).
+  const students = useTenantRows<StudentProfile>(uid, 'students')
+  const mineIds = useMemo(() => (mine ? mine.map((c) => c.id) : null), [mine])
+  const exams = useExamsOfCourses(uid, mineIds)
+  const examIds = useMemo(() => (exams.exams ? exams.exams.map((e) => e.id) : null), [exams.exams])
+  const grades = useGradesOfExams(uid, examIds)
+  const toGrade = useMemo(() => {
+    if (!mine || !exams.exams || !grades.gradesByExam || !students.data) return null
+    const courseById = byId(mine)
+    return exams.exams.filter((e) => {
+      const graded = new Set((grades.gradesByExam!.get(e.id) ?? []).map((g) => g.studentId))
+      return isExamToGrade(graded, studentsToGrade(students.data!, courseById.get(e.courseId)))
+    }).length
+  }, [mine, exams.exams, grades.gradesByExam, students.data])
 
   if (!appUser) return null
 
@@ -74,12 +92,21 @@ export function TeacherDashboard() {
           hint={mine && programNames}
           to="/app/programs"
         />
+        <StatCard
+          id="exams-to-grade"
+          index={3}
+          icon={ClipboardCheck}
+          label="Examens à noter"
+          value={exams.error || grades.error || students.error ? 0 : toGrade}
+          hint={toGrade === null ? undefined : toGrade ? 'Notes incomplètes' : 'Toutes les notes sont saisies'}
+          to="/app/notes"
+        />
       </StatGrid>
 
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Panel
           id="my-courses-list"
-          index={3}
+          index={4}
           icon={BookOpen}
           title="Mes cours"
           className="md:col-span-2"
@@ -128,9 +155,8 @@ export function TeacherDashboard() {
         </Panel>
 
         <ComingSoonCard
-          index={4}
+          index={5}
           items={[
-            { icon: ClipboardCheck, label: 'Notes et examens', detail: 'Saisie des notes et des épreuves de vos cours.' },
             { icon: Video, label: 'E-learning', detail: 'Supports et activités en ligne pour vos étudiants.' },
             { icon: Bell, label: 'Notifications', detail: "Messages de l'administration et rappels." },
           ]}

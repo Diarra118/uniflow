@@ -245,6 +245,17 @@ test('enseignant : ses cours seulement, avec filière et crédits', async () => 
   const mine = HZ.courses.filter((c) => c.teacherId === teacherRec.id)
   assert.equal(await statValue(page, 'my-courses'), mine.length)
   assert.equal(await statValue(page, 'my-credits'), mine.reduce((s, c) => s + c.credits, 0))
+  // Examens à noter : examens de ses cours où un étudiant (inscrit ou en
+  // attente) de la filière n'a pas de note — recalculé depuis DEMO.
+  const toGrade = (HZ.exams ?? []).filter((e) => {
+    const course = HZ.courses.find((c) => c.id === e.courseId)
+    if (course?.teacherId !== teacherRec.id) return false
+    const cls = (st) => HZ.classes.find((k) => k.id === st.classId)
+    const expected = HZ.students.filter((st) => cls(st)?.programId === course.programId && ['enrolled', 'pending'].includes(st.enrollmentStatus ?? 'enrolled'))
+    return expected.some((st) => !(HZ.grades ?? []).some((g) => g.examId === e.id && g.studentId === st.id))
+  }).length
+  assert.equal(await statValue(page, 'exams-to-grade'), toGrade)
+  assert.equal(await page.locator('[data-stat="exams-to-grade"]').getAttribute('href'), '/app/notes')
   await page.getByTestId('my-courses-total').getByText(`${mine.length} cours au total`).waitFor()
   const rows = page.locator('[data-testid="my-courses"] li')
   assert.equal(await rows.count(), mine.length)
@@ -253,7 +264,7 @@ test('enseignant : ses cours seulement, avec filière et crédits', async () => 
     await row.getByText(HZ.programs.find((p) => p.id === c.programId).name).waitFor()
     await row.getByText(`${c.credits} crédits`).waitFor()
   }
-  assert.deepEqual(await ids(page, 'data-stat'), ['my-courses', 'my-credits', 'my-programs'])
+  assert.deepEqual(await ids(page, 'data-stat'), ['exams-to-grade', 'my-courses', 'my-credits', 'my-programs'])
   assert.deepEqual(await ids(page, 'data-card'), ['coming-soon', 'my-courses-list'])
   await ctx.close()
 })
@@ -271,7 +282,7 @@ test('étudiant : sa fiche résumée et le lien « Mon dossier »', async () => 
   const programCourses = HZ.courses.filter((c) => c.programId === cls.programId)
   assert.equal(await page.locator('[data-testid="program-courses"] li').count(), programCourses.length)
   assert.equal(await page.locator('[data-stat]').count(), 0, 'aucune carte chiffrée de l’admin')
-  assert.deepEqual(await ids(page, 'data-card'), ['coming-soon', 'my-record', 'program-courses'])
+  assert.deepEqual(await ids(page, 'data-card'), ['coming-soon', 'latest-grades', 'my-record', 'program-courses'])
   await ctx.close()
 })
 

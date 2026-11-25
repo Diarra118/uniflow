@@ -139,7 +139,7 @@ test('connexion admin, persistance après rechargement et nouvel onglet, thème,
   await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
   await page.getByText('Audit admin').first().waitFor()
   // « Inscriptions » : demandes d'auto-inscription (admin d'université seulement).
-  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Inscriptions', 'Tableau de bord', 'Étudiants'].sort())
+  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Inscriptions', 'Notes', 'Tableau de bord', 'Étudiants'].sort())
   await checkFrench(page, 'dashboard admin')
 
   // Persistance de session.
@@ -191,7 +191,7 @@ test('enseignant : navigation et lecture de la liste des étudiants', async () =
   await login(page, 'teacher')
   await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
   await page.getByText('Audit teacher').first().waitFor()
-  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Tableau de bord', 'Étudiants'].sort())
+  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Enseignants', 'Filières', 'Notes', 'Tableau de bord', 'Étudiants'].sort())
   await page.goto(`${BASE}/app/students`)
   await page.getByText('Diallo').first().waitFor({ timeout: 15000 })
   assert.equal(await page.getByRole('button', { name: /Nouvel étudiant/ }).count(), 0, 'pas de bouton de création')
@@ -204,7 +204,7 @@ test('étudiant : « Mon dossier » seulement, liste des étudiants refusée', a
   await login(page, 'student')
   await page.waitForURL(`${BASE}/app`, { timeout: 20000 })
   await page.getByText('Audit student').first().waitFor()
-  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Filières', 'Mon dossier', 'Tableau de bord'].sort())
+  assert.deepEqual(await navLinks(page), ['Classes', 'Cours', 'Filières', 'Mes notes', 'Mon dossier', 'Tableau de bord'].sort())
   await page.goto(`${BASE}/app/mon-dossier`)
   await page.getByText('Awa Diallo').first().waitFor({ timeout: 15000 })
   await checkFrench(page, 'mon dossier')

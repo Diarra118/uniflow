@@ -182,3 +182,44 @@ export interface SignupRequest {
   reason?: string
   linkedRecordId?: string
 }
+
+// ---------------------------------------------------------------------
+// v1.4 — Notes & examens (Realtime Database, sans Cloud Function)
+// ---------------------------------------------------------------------
+
+/** Devoir, partiel ou examen final. */
+export type ExamType = 'homework' | 'midterm' | 'final'
+
+/** universities/{u}/exams/{examId}. Cours et note maximale immuables
+ * (database.rules.json) : une note déjà saisie reste toujours valide. */
+export interface Exam {
+  id: string
+  courseId: string
+  title: string
+  type: ExamType
+  /** Date de l'épreuve, AAAA-MM-JJ. */
+  date: string
+  coefficient: number
+  /** Note maximale (20 par défaut). */
+  maxScore: number
+  createdBy: string
+  updatedBy: string
+  createdAt: number
+  updatedAt: number
+}
+
+/** universities/{u}/grades/{examId}_{studentId} : une note par examen et
+ * par fiche. studentId = id de la fiche étudiant. examId, courseId et
+ * studentId sont immuables ; value est obligatoire (0 à maxScore). */
+export interface Grade {
+  id: string
+  examId: string
+  courseId: string
+  studentId: string
+  value: number
+  comment?: string
+  createdBy: string
+  updatedBy: string
+  createdAt: number
+  updatedAt: number
+}

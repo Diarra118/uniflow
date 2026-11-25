@@ -18,6 +18,9 @@ import { ProgramsPage } from '@/modules/programs/ProgramsPage'
 import { CoursesPage } from '@/modules/courses/CoursesPage'
 import { ClassesPage } from '@/modules/classes/ClassesPage'
 import { SignupRequestsPage } from '@/modules/signup/SignupRequestsPage'
+import { GradesPage } from '@/modules/grades/GradesPage'
+import { ExamGradesPage } from '@/modules/grades/ExamGradesPage'
+import { MyGradesPage } from '@/modules/grades/MyGradesPage'
 import { getHomeRoute } from '@/core/rbac/getHomeRoute'
 import { FullPageLoader } from '@/shared/components/States'
 
@@ -122,6 +125,32 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={{ resource: 'classes', action: 'read' }}>
                   <ClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Notes : enseignant (ses cours) et admin (lecture, correction). */}
+            <Route
+              path="notes"
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'grades', action: 'update' }}>
+                  <GradesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="notes/:examId"
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'grades', action: 'update' }}>
+                  <ExamGradesPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Mes notes : l'étudiant, à partir de SA fiche. */}
+            <Route
+              path="mes-notes"
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'ownStudentRecord', action: 'read' }}>
+                  <MyGradesPage />
                 </ProtectedRoute>
               }
             />
