@@ -113,3 +113,32 @@ export function useGradesOfStudent(universityId: string | null, studentId: strin
   const { byKey, error } = useLiveLists<Grade>(specs)
   return { grades: universityId && studentId && byKey ? (byKey.get('mine') ?? []) : null, error }
 }
+
+export type ExamLoad =
+  | { status: 'loading' | 'missing' | 'error'; exam: null }
+  | { status: 'ready'; exam: Exam }
+
+/**
+ * Un examen par son identifiant, en distinguant « en cours de chargement »
+ * de « introuvable » : examen supprimé, examen d'une autre université
+ * (le chemin est toujours celui de SON université) ou cours d'un collègue
+ * (lecture refusée par les règles).
+ */
+export function useExam(universityId: string | null, examId: string | null): ExamLoad {
+  const path = universityId && examId ? `${tenantCollectionPath(universityId, 'exams')}/${examId}` : null
+  const [state, setState] = useState<{ path: string | null; load: ExamLoad }>({ path: null, load: { status: 'loading', exam: null } })
+  useEffect(() => {
+    if (!path) return
+    return onValue(
+      ref(rtdb, path),
+      (snap) =>
+        setState({
+          path,
+          load: snap.exists() ? { status: 'ready', exam: { ...(snap.val() as Omit<Exam, 'id'>), id: snap.key as string } } : { status: 'missing', exam: null },
+        }),
+      () => setState({ path, load: { status: 'error', exam: null } })
+    )
+  }, [path])
+  if (!path) return { status: 'missing', exam: null }
+  return state.path === path ? state.load : { status: 'loading', exam: null }
+}

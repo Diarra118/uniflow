@@ -2,15 +2,13 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ClipboardCheck, Pencil, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '@/core/firebase/AuthContext'
-import { tenantDocPath } from '@/core/firebase/paths'
 import type { Exam, Grade, StudentProfile } from '@/core/types'
-import { useNode } from '@/modules/dashboard/useDashboardData'
 import { EmptyState, ErrorState, TableSkeleton } from '@/shared/components/States'
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import { countLabel } from '@/shared/utils/plural'
 import { correctGrade, deleteGrade, saveExamGrades, type GradeEntry } from './api'
 import { examAverage, studentsToGrade } from './grading'
-import { useGradesOfExams } from './hooks'
+import { useExam, useGradesOfExams } from './hooks'
 import { COMMENT_MAX, EXAM_TYPE_LABELS, formatExamDate, formatScore, parseScore } from './schema'
 import { useGradingScope } from './useGradingScope'
 
@@ -26,10 +24,10 @@ export function ExamGradesPage() {
   const { appUser } = useAuth()
   const scope = useGradingScope()
   const uid = scope.universityId
-  const exam = useNode<Omit<Exam, 'id'>>(uid && examId ? tenantDocPath(uid, 'exams', examId) : null)
+  const exam = useExam(uid, examId || null)
   const examIds = useMemo(() => (examId ? [examId] : null), [examId])
-  const grades = useGradesOfExams(uid, exam.data ? examIds : null)
-  useDocumentTitle(exam.data?.title ?? 'Notes')
+  const grades = useGradesOfExams(uid, exam.exam ? examIds : null)
+  useDocumentTitle(exam.exam?.title ?? 'Notes')
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
@@ -38,7 +36,7 @@ export function ExamGradesPage() {
   const [correcting, setCorrecting] = useState<{ grade: Grade; student: StudentProfile } | null>(null)
   const [deleting, setDeleting] = useState<{ grade: Grade; student: StudentProfile } | null>(null)
 
-  const course = exam.data ? scope.allCourses?.find((c) => c.id === exam.data!.courseId) : undefined
+  const course = exam.exam ? scope.allCourses?.find((c) => c.id === exam.exam!.courseId) : undefined
   const expected = useMemo(
     () => (scope.students && course ? studentsToGrade(scope.students, course) : null),
     [scope.students, course]
@@ -55,7 +53,7 @@ export function ExamGradesPage() {
     </Link>
   )
 
-  if (exam.error || (exam.data === null && grades.error)) {
+  if (exam.status === 'missing' || exam.status === 'error') {
     return (
       <div className="mx-auto w-full max-w-6xl">
         {back}
@@ -71,7 +69,7 @@ export function ExamGradesPage() {
       </div>
     )
   }
-  if (!exam.data || !expected || !examGrades || !scope.allCourses) {
+  if (!exam.exam || !expected || !examGrades || !scope.allCourses) {
     return (
       <div className="mx-auto w-full max-w-6xl">
         {back}
@@ -80,7 +78,7 @@ export function ExamGradesPage() {
     )
   }
 
-  const e: Exam = { ...exam.data, id: examId }
+  const e: Exam = exam.exam
   const editable = !scope.isAdmin
   const average = examAverage(examGrades)
   const others = scope.isAdmin
@@ -192,7 +190,8 @@ export function ExamGradesPage() {
         <form onSubmit={handleSave} noValidate>
           <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
             <table className="table" data-testid="grades-table">
-              <thead>
+              {/* En-têtes renforcés : contraste AA (4,5:1) en clair comme en sombre. */}
+              <thead className="text-base-content/80">
                 <tr>
                   <th>Matricule</th>
                   <th>Étudiant</th>
@@ -207,7 +206,7 @@ export function ExamGradesPage() {
                   const name = `${s.firstName} ${s.lastName}`
                   return (
                     <tr key={s.id} data-student={s.studentNumber}>
-                      <td className="font-mono-data text-xs">{s.studentNumber}</td>
+                      <td className="font-mono-data whitespace-nowrap text-xs">{s.studentNumber}</td>
                       <td className="whitespace-nowrap">{name}</td>
                       {editable ? (
                         <>
@@ -263,7 +262,7 @@ export function ExamGradesPage() {
                   const s = studentById.get(g.studentId)
                   return (
                     <tr key={g.id} className="text-base-content/70">
-                      <td className="font-mono-data text-xs">{s?.studentNumber ?? '—'}</td>
+                      <td className="font-mono-data whitespace-nowrap text-xs">{s?.studentNumber ?? '—'}</td>
                       <td>{s ? `${s.firstName} ${s.lastName}` : 'Fiche supprimée'} (hors filière)</td>
                       <td className="dash-number">{formatScore(g.value)}</td>
                       <td className="text-sm">{g.comment ?? ''}</td>
