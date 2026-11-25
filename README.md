@@ -15,6 +15,7 @@ dans ce dépôt public : ils sont communiqués séparément.
 | Listes et fiches des étudiants et des enseignants : création, modification, activation | Validation ou refus des demandes d'inscription |
 | Filières, cours et classes : création et modification | Création d'un accès de connexion depuis une fiche, avec l'envoi ou le renvoi de l'invitation |
 | Isolation des universités, appliquée par les règles de sécurité de la base | Déclencheurs serveur : pose automatique des droits (custom claims) et révocation des sessions d'un compte suspendu |
+| **Notes & examens** : examens et saisie des notes par l'enseignant, « Mes notes » et moyenne pondérée pour l'étudiant, correction par l'admin (sans Cloud Function) | |
 | Mode sombre et affichage mobile | |
 
 **Pourquoi ?** La version en ligne utilise le plan gratuit Spark de
@@ -175,12 +176,21 @@ pas de base SQL.
 - **Révocation immédiate** : suspendre un profil ou changer son rôle coupe
   ses accès sur-le-champ et déconnecte la personne.
 - **Relations parent-enfant** (`parentLinks`) contrôlées par les règles.
+- **Notes & examens** (`v1.4-soutenance`, sans Cloud Function) :
+  l'enseignant crée les examens de SES cours (devoir, partiel, examen
+  final ; coefficient ; note maximale, 20 par défaut) et saisit les notes
+  des étudiants de la filière dans un tableau ; l'étudiant voit « Mes
+  notes » par cours avec la moyenne pondérée sur 20, calculée à
+  l'affichage ; l'admin lit tout dans son université, corrige une note et
+  ne supprime qu'après confirmation. Les règles imposent une valeur entre
+  0 et la note maximale, une note par examen et par étudiant, et
+  interdisent de vider une note existante. Parent : aucun accès dans ce lot.
 - Interface responsive, thèmes clair et sombre, entièrement en français.
 - **Tests** : règles de sécurité, Cloud Functions, parcours complets dans
   le navigateur, sur émulateurs (voir plus bas).
 
-Les modules notes et examens, paiements, documents, e-learning et
-notifications ne sont **pas encore livrés** : l'interface les annonce comme
+Les modules paiements, documents, e-learning et notifications ne sont
+**pas encore livrés** : l'interface les annonce comme
 « Bientôt disponible », sans lien ni donnée (voir « Feuille de route »).
 
 ### Détails de la démo locale
@@ -535,7 +545,8 @@ Points identifiés lors des revues, non traités à ce stade :
 | Livré | Audit de sécurité, démo locale en une commande (`v1.0-soutenance`) |
 | Livré | Auto-inscription validée par l'admin (`v1.1-soutenance`) |
 | Livré | Tableau de bord par rôle, espace plateforme (`v1.2-soutenance`) |
-| À venir | Notes/Examens → Inscriptions pédagogiques/Paiements → Documents/Bibliothèque → E-learning → Notifications → IA & Insights → Espace commercial plateforme → Durcissement sécurité & audit RGPD |
+| Livré | Notes & examens, sur Realtime Database et sans Cloud Function, aussi en ligne (`v1.4-soutenance`) |
+| À venir | Inscriptions pédagogiques/Paiements → Documents/Bibliothèque → E-learning → Notifications → IA & Insights → Espace commercial plateforme → Durcissement sécurité & audit RGPD |
 
 Voir `PROMPTS.md` pour l'historique des décisions structurantes et
 `FIREBASE_SECURITY.md` pour le détail du modèle de sécurité.

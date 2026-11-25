@@ -46,7 +46,7 @@ ensuite. La démo est prête quand le terminal affiche « Démo UniFlow prête �
    l'interface des émulateurs, le fichier des comptes sur un écran non
    projeté. Désactiver la mise en veille et les notifications.
 
-## 3. Parcours de démonstration (10 minutes)
+## 3. Parcours de démonstration (11 minutes)
 
 | Temps | Étape | Ce qu'on fait | Ce qu'on montre |
 |---|---|---|---|
@@ -58,9 +58,10 @@ ensuite. La démo est prête quand le terminal affiche « Démo UniFlow prête �
 | 5:00 | **Auto-inscription** | Même fenêtre privée : page de connexion > **Créer un compte** : prénom `Aïssatou`, nom `Ba`, e-mail `aissatou.ba@horizon.test`, mot de passe `Soutenance2026` (deux fois), université **Université Horizon**, rôle **Étudiant** > **Envoyer ma demande** | Seul le nom des universités est proposé ; écran « Votre demande est en attente de validation par votre université », aucune donnée accessible |
 | 6:00 | **Validation par l'admin** | Fenêtre admin : lien **Inscriptions** (compteur « 1 ») > ligne Ba Aïssatou > **Valider** > matricule `HZ-2026-051` > **Valider** | Sans recharger, la fenêtre privée bascule seule dans l'espace étudiant (« Mon dossier » avec le matricule) ; fiche créée côté admin. Option : montrer un **Refuser** avec motif sur une seconde demande |
 | 7:00 | **Suspension en direct** | Laisser Aïssatou sur « Mon dossier ». Interface des émulateurs > Realtime Database (`demo-uniflow`) > `users` > profil de `aissatou.ba@horizon.test` > `status` : remplacer `active` par `suspended` | La fenêtre privée se déconnecte immédiatement avec « Votre compte a été suspendu… » ; une nouvelle connexion n'ouvre aucun accès |
-| 8:30 | **Isolation entre universités** | Fenêtre privée : se connecter avec `admin@baobab.test` | Uniquement les données de l'Institut Baobab ; aucune trace d'Horizon |
-| 9:30 | **Mode sombre** | Icône lune en haut à droite, puis recharger la page et se déconnecter | Thème conservé après rechargement et sur la page de connexion |
-| 10:00 | Conclusion | — | Règles de sécurité testées (isolation, rôles, révocation immédiate, demandes d'inscription sans aucun droit avant validation) |
+| 8:30 | **Notes & examens** | Fenêtre privée : `moussa.traore@horizon.test` > **Notes** > INF101 > **Devoir 2 — Récursivité** : saisir `7,5` pour Khady Sarr et `6` pour Cheikh Mbaye > **Enregistrer les notes**. Puis se déconnecter et se connecter avec `awa.diallo@horizon.test` > **Mes notes** | Tableau de bord enseignant « Examens à noter : 2 », une ligne par étudiant de la filière, message « 2 notes enregistrées. » ; côté étudiante, ses notes seulement et la moyenne pondérée d'INF101 (13,75 / 20) |
+| 9:30 | **Isolation entre universités** | Fenêtre privée : se connecter avec `admin@baobab.test` | Uniquement les données de l'Institut Baobab ; aucune trace d'Horizon |
+| 10:15 | **Mode sombre** | Icône lune en haut à droite, puis recharger la page et se déconnecter | Thème conservé après rechargement et sur la page de connexion |
+| 10:45 | Conclusion | — | Règles de sécurité testées (isolation, rôles, révocation immédiate, demandes d'inscription sans aucun droit avant validation, notes bornées et limitées aux cours de l'enseignant) |
 
 Astuce pour la suspension : dans `users`, chaque profil est rangé sous son
 identifiant (uid) ; le bon est celui dont le champ `email` vaut
