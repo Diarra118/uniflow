@@ -357,6 +357,85 @@ test('mode sombre et largeur mobile (390 px)', async () => {
   await desk.ctx.close()
 })
 
+test('notes : examen créé et noté par l’enseignant, vu par l’étudiant, corrigé par l’admin, puis supprimé', async () => {
+  const TEACHER = emailOf(HZ.teachers[0], HZ) // Moussa Traoré : INF101, INF201
+  const STUDENT = emailOf(HZ.students[0], HZ) // Awa Diallo : filière INF
+  const title = `Vérification en ligne ${Date.now().toString().slice(-5)}`
+  const adminToken = await idToken('admin@horizon.test')
+  const testExams = async () => {
+    const res = await fetchRetry(dbUrl(`universities/${HZ.id}/exams`, adminToken))
+    assert.equal(res.status, 200)
+    return Object.entries((await res.json()) ?? {}).filter(([, e]) => e.title === title)
+  }
+  const removeTestData = async () => {
+    for (const [id] of await testExams()) {
+      for (const s of HZ.students) {
+        await fetchRetry(dbUrl(`universities/${HZ.id}/grades/${id}_${s.id}`, adminToken), { method: 'DELETE' })
+      }
+      await fetchRetry(dbUrl(`universities/${HZ.id}/exams/${id}`, adminToken), { method: 'DELETE' })
+    }
+  }
+  cleanup.push(removeTestData)
+
+  // Enseignant : création de l'examen et saisie d'une note.
+  const t = await newPage('enseignant (notes)')
+  await login(t.page, TEACHER)
+  assert.equal(await statValue(t.page, 'exams-to-grade'), 2)
+  await t.page.goto(`${BASE}/app/notes`)
+  const inf101 = t.page.locator('[data-course="INF101"]')
+  await inf101.waitFor({ timeout: 30000 })
+  await inf101.getByRole('button', { name: 'Nouvel examen' }).click()
+  const modal = t.page.locator('.modal-box')
+  await modal.locator('#exam-title').fill(title)
+  await modal.locator('#exam-date').fill('2026-11-25')
+  await modal.getByRole('button', { name: 'Créer' }).click()
+  await modal.waitFor({ state: 'detached', timeout: 20000 })
+  await inf101.locator(`[data-exam="${title}"]`).click()
+  const [[examId]] = await testExams()
+  await t.page.waitForURL(`${BASE}/app/notes/${examId}`)
+  const awaInput = t.page.locator(`tr[data-student="${HZ.students[0].number}"] input`).first()
+  await awaInput.waitFor({ timeout: 30000 })
+  assert.equal(await t.page.locator('[data-testid="grades-table"] tbody tr').count(), 5)
+  await awaInput.fill('15,5')
+  await t.page.getByRole('button', { name: 'Enregistrer les notes' }).click()
+  await t.page.getByRole('status').getByText('1 note enregistrée.').waitFor({ timeout: 20000 })
+  await capture(t.page, '14-notes-saisie-enseignant')
+  await t.ctx.close()
+
+  // Étudiant : la note et la moyenne pondérée du cours.
+  const s = await newPage('étudiant (notes)')
+  await login(s.page, STUDENT)
+  await s.page.goto(`${BASE}/app/mes-notes`)
+  const course = s.page.locator('[data-course="INF101"]')
+  await course.locator(`[data-exam="${title}"] [data-score]`).getByText('15,5').waitFor({ timeout: 30000 })
+  // (14×1 + 12,5×2 + 8/10×20×1 + 15,5×1) / 5 = 14,1
+  assert.equal((await course.locator('[data-average]').innerText()).replace(/\s+/g, ' '), 'Moyenne 14,1 / 20')
+  await capture(s.page, '15-notes-etudiant')
+  await s.ctx.close()
+
+  // Admin : correction de la note.
+  const a = await newPage('admin (notes)')
+  await login(a.page, 'admin@horizon.test')
+  await a.page.goto(`${BASE}/app/notes/${examId}`)
+  const row = a.page.locator(`tr[data-student="${HZ.students[0].number}"]`)
+  await row.locator('[data-value]').getByText('15,5').waitFor({ timeout: 30000 })
+  await row.getByRole('button', { name: 'Corriger' }).click()
+  await a.page.locator('#correct-value').fill('16')
+  await a.page.getByRole('button', { name: 'Enregistrer la correction' }).click()
+  await row.locator('[data-value]').getByText('16').waitFor({ timeout: 20000 })
+  const graded = await (await fetchRetry(dbUrl(`universities/${HZ.id}/grades/${examId}_${HZ.students[0].id}`, adminToken))).json()
+  assert.equal(graded.value, 16)
+  assert.equal(graded.updatedBy, HZ.admin.uid)
+  await capture(a.page, '16-notes-correction-admin')
+  await a.ctx.close()
+
+  // Données de test supprimées (note puis examen), avec le jeton de l'admin.
+  await removeTestData()
+  assert.equal((await testExams()).length, 0)
+  const gone = await fetchRetry(dbUrl(`universities/${HZ.id}/grades/${examId}_${HZ.students[0].id}`, adminToken))
+  assert.equal(await gone.json(), null)
+})
+
 test('console : aucune lecture refusée, aucune erreur, aucun appel de fonction', () => {
   assert.deepEqual(consoleIssues, [], JSON.stringify(consoleIssues))
   assert.deepEqual(pageErrors, [], JSON.stringify(pageErrors))
